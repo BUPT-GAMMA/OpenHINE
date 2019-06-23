@@ -1,2 +1,2 @@
-# OpenHNE
-An Open-Source Package for Heterogeneous Network Embedding (HNE)
+# OpenHNE: An Open-Source Toolkit for Heterogeneous Network Embedding (HNE)
+
