@@ -1,2 +1,2 @@
-# OpenHNE: An Open-Source Toolkit for Heterogeneous Network Embedding (HNE)
+# OpenHINE: An Open-Source Toolkit for Heterogeneous Information Network Embedding (HINE)
 
