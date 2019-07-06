@@ -18,7 +18,8 @@ warnings.filterwarnings('ignore')
 
 
 class RHINEDataProcess(object):
-    def __init__(self,output_fold, find_dict, matrix2id_dict,adj_matrix,relation_list):
+    def __init__(self, output_fold, find_dict,
+                 matrix2id_dict, adj_matrix, relation_list):
         self.find_dict = find_dict
         self.matrix2id_dict = matrix2id_dict
         self.adj_matrix = adj_matrix
@@ -26,7 +27,9 @@ class RHINEDataProcess(object):
         self.output_fold = output_fold
 
     def generate_triples(self):
-        print ('gernerating triples for relation {}...'.format(self.relation_list))
+        print(
+            'generating triples for relation {}...'.format(
+                self.relation_list))
 
         relation_type = self.relation_list.split('+')
         len_r = 0
@@ -37,30 +40,46 @@ class RHINEDataProcess(object):
             num_triples = len(ridx)
             source_type, target_type = r.split('-')
             tempr = str(source_type) + str(target_type)
-            train_data = open((str(self.output_fold)+'train2id_'+ str(tempr) +'.txt'),'w')
+            train_data = open(
+                (str(
+                    self.output_fold) +
+                    'train2id_' +
+                    str(tempr) +
+                    '.txt'),
+                'w')
             for i in range(num_triples):
-                n1 = self.find_dict[str(source_type)+str(ridx[i])]
-                n2 = self.find_dict[str(target_type)+str(cidx[i])]
+                n1 = self.find_dict[str(source_type) + str(ridx[i])]
+                n2 = self.find_dict[str(target_type) + str(cidx[i])]
                 w = int(self.adj_matrix[r][ridx[i]][cidx[i]])
-                train_data.write(str(n1) + '\t' + str(n2) + '\t' + str(len_r) + '\t' + str(w) + '\n')
+                train_data.write(
+                    str(n1) +
+                    '\t' +
+                    str(n2) +
+                    '\t' +
+                    str(len_r) +
+                    '\t' +
+                    str(w) +
+                    '\n')
             train_data.close()
             len_r += 1
-    def merge_triples(self,relation_category):
+
+    def merge_triples(self, relation_category):
         relation_category = relation_category.split('|')
         for rc in relation_category:
             rc = rc.split('==')
-            merged_data = open((str(self.output_fold)+ 'train2id_'+str(rc[0])+'.txt'),'w+')
+            merged_data = open(
+                (str(self.output_fold) + 'train2id_' + str(rc[0]) + '.txt'), 'w+')
             relation_list = rc[1].split('+')
             line_num = 0
             content = ''
             for r in relation_list:
                 r = r.split('-')
-                r = str(r[0])+str(r[1])
-                for line in open(str(self.output_fold)+'train2id_'+str(r)+'.txt'):
+                r = str(r[0]) + str(r[1])
+                for line in open(str(self.output_fold) +
+                                 'train2id_' + str(r) + '.txt'):
                     content += line
                     line_num += 1
-            merged_data.writelines(str(line_num)+'\n'+content)
-
+            merged_data.writelines(str(line_num) + '\n' + content)
 
 
 class Model(nn.Module):
@@ -74,10 +93,14 @@ class Model(nn.Module):
         sample positive IRs triples
         :return:
         """
-        self.postive_h_IRs = Variable(torch.from_numpy(self.config.batch_h_IRs[0:int(self.config.batch_size_IRs)])).cuda()
-        self.postive_t_IRs = Variable(torch.from_numpy(self.config.batch_t_IRs[0:int(self.config.batch_size_IRs)])).cuda()
-        self.postive_r_IRs = Variable(torch.from_numpy(self.config.batch_r_IRs[0:int(self.config.batch_size_IRs)])).cuda()
-        self.postive_w_IRs = Variable(torch.from_numpy(self.config.batch_w_IRs[0:int(self.config.batch_size_IRs)])).cuda()
+        self.postive_h_IRs = Variable(torch.from_numpy(
+            self.config.batch_h_IRs[0:int(self.config.batch_size_IRs)])).cuda()
+        self.postive_t_IRs = Variable(torch.from_numpy(
+            self.config.batch_t_IRs[0:int(self.config.batch_size_IRs)])).cuda()
+        self.postive_r_IRs = Variable(torch.from_numpy(
+            self.config.batch_r_IRs[0:int(self.config.batch_size_IRs)])).cuda()
+        self.postive_w_IRs = Variable(torch.from_numpy(
+            self.config.batch_w_IRs[0:int(self.config.batch_size_IRs)])).cuda()
         return self.postive_h_IRs, self.postive_t_IRs, self.postive_r_IRs, self.postive_w_IRs
 
     def get_negtive_IRs(self):
@@ -97,10 +120,14 @@ class Model(nn.Module):
         return self.negtive_h_IRs, self.negtive_t_IRs, self.negtive_r_IRs, self.negtive_w_IRs
 
     def get_postive_ARs(self):
-        self.postive_h_ARs = Variable(torch.from_numpy(self.config.batch_h_ARs[0:int(self.config.batch_size_ARs)])).cuda()
-        self.postive_t_ARs = Variable(torch.from_numpy(self.config.batch_t_ARs[0:int(self.config.batch_size_ARs)])).cuda()
-        self.postive_r_ARs = Variable(torch.from_numpy(self.config.batch_r_ARs[0:int(self.config.batch_size_ARs)])).cuda()
-        self.postive_w_ARs = Variable(torch.from_numpy(self.config.batch_w_ARs[0:int(self.config.batch_size_ARs)])).cuda()
+        self.postive_h_ARs = Variable(torch.from_numpy(
+            self.config.batch_h_ARs[0:int(self.config.batch_size_ARs)])).cuda()
+        self.postive_t_ARs = Variable(torch.from_numpy(
+            self.config.batch_t_ARs[0:int(self.config.batch_size_ARs)])).cuda()
+        self.postive_r_ARs = Variable(torch.from_numpy(
+            self.config.batch_r_ARs[0:int(self.config.batch_size_ARs)])).cuda()
+        self.postive_w_ARs = Variable(torch.from_numpy(
+            self.config.batch_w_ARs[0:int(self.config.batch_size_ARs)])).cuda()
         return self.postive_h_ARs, self.postive_t_ARs, self.postive_r_ARs, self.postive_w_ARs
 
     def get_negtive_ARs(self):
@@ -129,8 +156,10 @@ class RHINE(Model):
 
     def __init__(self, config):
         super(RHINE, self).__init__(config)
-        self.ent_embeddings = nn.Embedding(config.total_nodes, config.hidden_size)
-        self.rel_embeddings = nn.Embedding(config.total_IRs, config.hidden_size)
+        self.ent_embeddings = nn.Embedding(
+            config.total_nodes, config.hidden_size)
+        self.rel_embeddings = nn.Embedding(
+            config.total_IRs, config.hidden_size)
         self.init_weights()
 
     def init_weights(self):
@@ -149,7 +178,7 @@ class RHINE(Model):
         loss = criterion(p_score, n_score, y)
         return loss
 
-    def forward(self,mode):
+    def forward(self, mode):
         loss = 0
         if mode == 'Trans':
             pos_h, pos_t, pos_r, pos_rel_w = self.get_postive_IRs()
@@ -194,9 +223,10 @@ class RHINE(Model):
             for i in range(int(neg_rate)):
                 # cl_loss = self.cl_loss_func(norm_pos_attr_w*p_score, norm_neg_attr_w*n_score)
                 cl_loss += self.loss_func(pos_attr_w * p_score,
-                                             neg_attr_w[i * neg_step:(i + 1) * neg_step] * n_score[i * neg_step:(i + 1) * neg_step])
+                                          neg_attr_w[i * neg_step:(i + 1) * neg_step] * n_score[i * neg_step:(i + 1) * neg_step])
             loss = cl_loss
         return loss
+
 
 def TrainRHINE(config):
     con = RHINEConfig()
@@ -219,20 +249,27 @@ def TrainRHINE(config):
     con.set_log_on(config.log_on)
     con.set_weight_decay(config.weight_decay)
     con.set_export_steps(config.export_steps)
-    con.set_export_files(str(config.output_modelfold) + "/RHINE" + "/model.vec." + str(config.mode) + ".tf")
-    con.set_out_files(str(config.output_embfold) + "/RHINE" + "/embedding.vec." + str(config.mode) + ".json")
-    #print(con)
+    con.set_export_files(str(config.output_modelfold) +
+                         "/RHINE" + "/model.vec." + str(config.mode) + ".tf")
+    con.set_out_files(str(config.output_embfold) + "/RHINE" +
+                      "/embedding.vec." + str(config.mode) + ".json")
+    # print(con)
     con.init()
-    #print(con)
+    # print(con)
     con.set_model(RHINE)
-    #print(con)
+    # print(con)
     con.run()
 
-    #print('evaluation...')
+    # print('evaluation...')
     exp = Evaluation()
-    emb_dict = exp.load_emb(str(config.output_embfold) + "/RHINE" + "/embedding.vec." + str(config.mode) + ".json")
+    emb_dict = exp.load_emb(str(config.output_embfold) +
+                            "/RHINE" +
+                            "/embedding.vec." +
+                            str(config.mode) +
+                            ".json")
     print(emb_dict)
-    #exp.evaluation(emb_dict)
+    # exp.evaluation(emb_dict)
+
 
 class RHINEConfig(object):
 
@@ -240,15 +277,18 @@ class RHINEConfig(object):
         self.lib_IRs = ctypes.cdll.LoadLibrary("./src/release/Sample_IRs.so")
         self.lib_IRs.sampling.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
                                           ctypes.c_int64, ctypes.c_int64, ctypes.c_int64]
-        self.lib_IRs.getHeadBatch.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-        self.lib_IRs.getTailBatch.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.lib_IRs.getHeadBatch.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.lib_IRs.getTailBatch.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.lib_ARs = ctypes.cdll.LoadLibrary("./src/release/Sample_ARs.so")
         self.lib_ARs.sampling.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
                                           ctypes.c_int64, ctypes.c_int64, ctypes.c_int64]
-        self.lib_ARs.getHeadBatch.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-        self.lib_ARs.getTailBatch.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-
+        self.lib_ARs.getHeadBatch.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.lib_ARs.getTailBatch.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
     def init(self):
         """
@@ -256,54 +296,78 @@ class RHINEConfig(object):
         :return:
         """
         self.trainModel = None
-        #print(self.in_path)
-        if self.in_path != None:
-            #print(self.in_path)
+        # print(self.in_path)
+        if self.in_path is not None:
+            # print(self.in_path)
             # sample IRs
             b = bytes(self.in_path, encoding='utf-8')
             print(len(self.in_path))
-            self.lib_IRs.setInPath(ctypes.create_string_buffer(b, len(self.in_path) * 2))
-            #print("T")
+            self.lib_IRs.setInPath(
+                ctypes.create_string_buffer(
+                    b, len(
+                        self.in_path) * 2))
+            # print("T")
             self.lib_IRs.setWorkThreads(self.workThreads)
             self.lib_IRs.randReset()
-            #print("YES")
+            # print("YES")
             self.lib_IRs.importTrainFiles()
             self.total_IRs = self.lib_IRs.getRelationTotal()
             self.total_nodes = self.lib_IRs.getEntityTotal()
             self.train_total_IRs_triple = self.lib_IRs.getTrainTotal()
             self.batch_size_IRs = self.lib_IRs.getTrainTotal() / self.IRs_nbatches
-            print ('# IRs triples: {}'.format(self.train_total_IRs_triple))
+            print('# IRs triples: {}'.format(self.train_total_IRs_triple))
             print('IRs triple batch size: {}'.format(self.batch_size_IRs))
-            self.batch_seq_size_IRs = self.batch_size_IRs * (1 + self.negative_ent+self.negative_rel)
-            self.batch_h_IRs = np.zeros(int(self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
-            self.batch_t_IRs = np.zeros(int(self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
-            self.batch_r_IRs = np.zeros(int(self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
-            self.batch_w_IRs = np.ones(int(self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_seq_size_IRs = self.batch_size_IRs * \
+                (1 + self.negative_ent + self.negative_rel)
+            self.batch_h_IRs = np.zeros(int(
+                self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_t_IRs = np.zeros(int(
+                self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_r_IRs = np.zeros(int(
+                self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_w_IRs = np.ones(int(
+                self.batch_size_IRs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
 
-            self.batch_h_addr_IRs = self.batch_h_IRs.__array_interface__['data'][0]
-            self.batch_t_addr_IRs = self.batch_t_IRs.__array_interface__['data'][0]
-            self.batch_r_addr_IRs = self.batch_r_IRs.__array_interface__['data'][0]
-            self.batch_w_addr_IRs = self.batch_w_IRs.__array_interface__['data'][0]
+            self.batch_h_addr_IRs = self.batch_h_IRs.__array_interface__[
+                'data'][0]
+            self.batch_t_addr_IRs = self.batch_t_IRs.__array_interface__[
+                'data'][0]
+            self.batch_r_addr_IRs = self.batch_r_IRs.__array_interface__[
+                'data'][0]
+            self.batch_w_addr_IRs = self.batch_w_IRs.__array_interface__[
+                'data'][0]
 
             # sample ARs
-            self.lib_ARs.setInPath(ctypes.create_string_buffer(b, len(self.in_path) * 2))
+            self.lib_ARs.setInPath(
+                ctypes.create_string_buffer(
+                    b, len(
+                        self.in_path) * 2))
             self.lib_ARs.setWorkThreads(self.workThreads)
             self.lib_ARs.randReset()
             self.lib_ARs.importTrainFiles()
             self.train_total_ARs_triple = self.lib_ARs.getTrainTotal()
             self.batch_size_ARs = self.lib_ARs.getTrainTotal() / self.ARs_nbatches
-            print ('# ARs triples: {}'.format(self.train_total_ARs_triple))
+            print('# ARs triples: {}'.format(self.train_total_ARs_triple))
             print('ARs triple batch size: {}'.format(self.batch_size_ARs))
-            self.batch_seq_size_ARs = self.batch_size_ARs * (1 + self.negative_ent+self.negative_rel)
-            self.batch_h_ARs = np.zeros(int(self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
-            self.batch_t_ARs = np.zeros(int(self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
-            self.batch_r_ARs = np.zeros(int(self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
-            self.batch_w_ARs = np.ones(int(self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_seq_size_ARs = self.batch_size_ARs * \
+                (1 + self.negative_ent + self.negative_rel)
+            self.batch_h_ARs = np.zeros(int(
+                self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_t_ARs = np.zeros(int(
+                self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_r_ARs = np.zeros(int(
+                self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
+            self.batch_w_ARs = np.ones(int(
+                self.batch_size_ARs * (1 + self.negative_ent + self.negative_rel)), dtype=np.int64)
 
-            self.batch_h_addr_ARs = self.batch_h_ARs.__array_interface__['data'][0]
-            self.batch_t_addr_ARs = self.batch_t_ARs.__array_interface__['data'][0]
-            self.batch_r_addr_ARs = self.batch_r_ARs.__array_interface__['data'][0]
-            self.batch_w_addr_ARs = self.batch_w_ARs.__array_interface__['data'][0]
+            self.batch_h_addr_ARs = self.batch_h_ARs.__array_interface__[
+                'data'][0]
+            self.batch_t_addr_ARs = self.batch_t_ARs.__array_interface__[
+                'data'][0]
+            self.batch_r_addr_ARs = self.batch_r_ARs.__array_interface__[
+                'data'][0]
+            self.batch_w_addr_ARs = self.batch_w_ARs.__array_interface__[
+                'data'][0]
 
     def set_opt_method(self, method):
         self.opt_method = method
@@ -319,8 +383,10 @@ class RHINEConfig(object):
 
     def set_out_files(self, path):
         self.out_path = path
+
     def set_optimizer(self, optimizer):
         self.optimizer = optimizer
+
     def set_dimension(self, dim):
         self.hidden_size = dim
         self.ent_size = dim
@@ -367,16 +433,17 @@ class RHINEConfig(object):
 
     def set_exportName(self, exportName):
         self.exportName = exportName
+
     def set_importName(self, importName):
         self.importName = importName
 
     def sampling_IRs(self):
         self.lib_IRs.sampling(self.batch_h_addr_IRs, self.batch_t_addr_IRs, self.batch_r_addr_IRs, self.batch_w_addr_IRs,
-                              int(self.batch_size_IRs),self.negative_ent, self.negative_rel)
+                              int(self.batch_size_IRs), self.negative_ent, self.negative_rel)
 
     def sampling_ARs(self):
         self.lib_ARs.sampling(self.batch_h_addr_ARs, self.batch_t_addr_ARs, self.batch_r_addr_ARs, self.batch_w_addr_ARs,
-                             int(self.batch_size_ARs),self.negative_ent, self.negative_rel)
+                              int(self.batch_size_ARs), self.negative_ent, self.negative_rel)
 
     def save_pytorch(self):
         torch.save(self.trainModel.state_dict(), self.exportName)
@@ -407,7 +474,8 @@ class RHINEConfig(object):
         f.close()
 
     def set_parameters_by_name(self, var_name, tensor):
-        self.trainModel.state_dict().get(var_name).copy_(torch.from_numpy(np.array(tensor)))
+        self.trainModel.state_dict().get(var_name).copy_(
+            torch.from_numpy(np.array(tensor)))
 
     def set_parameters(self, lists):
         for i in lists:
@@ -417,17 +485,20 @@ class RHINEConfig(object):
         self.model = model
         self.trainModel = self.model(config=self)
         self.trainModel.cuda()
-        if self.optimizer != None:
+        if self.optimizer is not None:
             pass
         elif self.opt_method == "Adagrad" or self.opt_method == "adagrad":
             self.optimizer = optim.Adagrad(self.trainModel.parameters(), lr=self.alpha,
                                            lr_decay=self.lr_decay, weight_decay=self.weight_decay)
         elif self.opt_method == "Adadelta" or self.opt_method == "adadelta":
-            self.optimizer = optim.Adadelta(self.trainModel.parameters(), lr=self.alpha)
+            self.optimizer = optim.Adadelta(
+                self.trainModel.parameters(), lr=self.alpha)
         elif self.opt_method == "Adam" or self.opt_method == "adam":
-            self.optimizer = optim.Adam(self.trainModel.parameters(), lr=self.alpha)
+            self.optimizer = optim.Adam(
+                self.trainModel.parameters(), lr=self.alpha)
         else:
-            self.optimizer = optim.SGD(self.trainModel.parameters(), lr=self.alpha)
+            self.optimizer = optim.SGD(
+                self.trainModel.parameters(), lr=self.alpha)
 
     def run(self):
         if self.importName is not None:
@@ -449,10 +520,11 @@ class RHINEConfig(object):
                 loss.backward()
                 self.optimizer.step()
 
-            if self.exportName is not None and (self.export_steps != 0 and epoch % self.export_steps == 0):
+            if self.exportName is not None and (
+                    self.export_steps != 0 and epoch % self.export_steps == 0):
                 self.save_pytorch()
             if self.log_on == 1:
-                print ('Epoch: {}, loss: {}'.format(epoch, res))
+                print('Epoch: {}, loss: {}'.format(epoch, res))
             if self.evaluation_flag and epoch != 0 and epoch % 100 == 0:
                 emb_json = self.get_parameters("list")
                 evaluation(emb_json)
@@ -477,19 +549,19 @@ class Evaluation:
             emb_dict = json.load(emb_file)
         return emb_dict
 
-    def evaluation(self,emb_dict):
+    def evaluation(self, emb_dict):
         entity_emb = emb_dict['ent_embeddings.weight']
-        with open('../data/dblp/node2id.txt','r') as e2i_file:
+        with open('../data/dblp/node2id.txt', 'r') as e2i_file:
             lines = e2i_file.readlines()
 
         paper_id_name_dict = {}
-        for i in range(1,len(lines)):
+        for i in range(1, len(lines)):
             tokens = lines[i].strip().split('\t')
             if lines[i][0] == 'p':
                 paper_id_name_dict[tokens[1]] = tokens[0]
 
-        for p_id,p_name in paper_id_name_dict.items():
-            p_emb = map(lambda x: float(x),entity_emb[int(p_id)])
+        for p_id, p_name in paper_id_name_dict.items():
+            p_emb = map(lambda x: float(x), entity_emb[int(p_id)])
             self.entity_name_emb_dict[p_name] = p_emb
 
         x_paper = []
@@ -505,21 +577,21 @@ class Evaluation:
 
     def kmeans_nmi(self, x, y, k):
         km = KMeans(n_clusters=k)
-        km.fit(x,y)
+        km.fit(x, y)
         y_pre = km.predict(x)
 
         nmi = normalized_mutual_info_score(y, y_pre)
         print('NMI: {}'.format(nmi))
 
-    def classification(self,x,y):
-        x_train, x_valid, y_train, y_valid = train_test_split(x, y, test_size=0.2,random_state=9)
+    def classification(self, x, y):
+        x_train, x_valid, y_train, y_valid = train_test_split(
+            x, y, test_size=0.2, random_state=9)
 
         lr = LogisticRegression()
-        lr.fit(x_train,y_train)
+        lr.fit(x_train, y_train)
 
         y_valid_pred = lr.predict(x_valid)
-        micro_f1 = f1_score(y_valid, y_valid_pred,average='micro')
-        macro_f1 = f1_score(y_valid, y_valid_pred,average='macro')
-        print ('Macro-F1: {}'.format(macro_f1))
-        print ('Micro-F1: {}'.format(micro_f1))
-
+        micro_f1 = f1_score(y_valid, y_valid_pred, average='micro')
+        macro_f1 = f1_score(y_valid, y_valid_pred, average='macro')
+        print('Macro-F1: {}'.format(macro_f1))
+        print('Micro-F1: {}'.format(micro_f1))
