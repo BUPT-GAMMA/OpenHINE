@@ -11,8 +11,9 @@ class MetaPathGenerator:
         pass
 
     # walk length=80  walks per node=40
-    def generate_random(self, outfilename, numwalks, walklength,
-                            nodelist, find_dict, matrix2id_dict, adj_matrix, mp_type):
+    @staticmethod
+    def generate_random(outfilename, numwalks, walklength,
+                        nodelist, find_dict, matrix2id_dict, adj_matrix, mp_type):
 
         outfile = open(outfilename, 'w')
 
@@ -22,23 +23,29 @@ class MetaPathGenerator:
             for j in range(0, numwalks):
                 node = start_node
                 outline = mp_type[0] + node
-                for k in range(0, walklength):
+                k = 0
+                while k < walklength:
                     for i in range(0, length - 1):
                         edge = mp_type[i] + '-' + mp_type[i + 1]
                         edge_inv = mp_type[i + 1] + '-' + mp_type[i]
-                        if (edge in key_set):
+                        if edge in key_set:
                             target_node_list = adj_matrix[edge][matrix2id_dict[mp_type[i] + node]]
-                            target_node_id = random.choice(np.nonzero(target_node_list)[0])
-                            target_node = find_dict[mp_type[i+1] + str(target_node_id)]
-                            outline += " " + mp_type[i+1] + target_node
-                            node = target_node
-                        elif (edge_inv in key_set):
-                            tmp_matrix = np.transpose(adj_matrix[edge_inv])
-                            target_node_list = tmp_matrix[matrix2id_dict[mp_type[i] + node]]
-                            target_node_id = random.choice(np.nonzero(target_node_list)[0])
-                            target_node = find_dict[mp_type[i+1] + str(target_node_id)]
+                            target_node_id = random.choice(
+                                np.nonzero(target_node_list)[0])
+                            target_node = find_dict[mp_type[i +
+                                                            1] + str(target_node_id)]
                             outline += " " + mp_type[i + 1] + target_node
                             node = target_node
+                        elif edge_inv in key_set:
+                            tmp_matrix = np.transpose(adj_matrix[edge_inv])
+                            target_node_list = tmp_matrix[matrix2id_dict[mp_type[i] + node]]
+                            target_node_id = random.choice(
+                                np.nonzero(target_node_list)[0])
+                            target_node = find_dict[mp_type[i +
+                                                            1] + str(target_node_id)]
+                            outline += " " + mp_type[i + 1] + target_node
+                            node = target_node
+                    k = k + length
                 outfile.write(outline + "\n")
         outfile.close()
 
@@ -51,7 +58,8 @@ class MP2vecDataProcess(object):
         self.nodeid2index = token2index
         self.index2nodeid = index2token
         self.index2frequency = index2frequency
-        index2type, type2indices = self.parse_node_type_mapping_txt(self.nodeid2index)
+        index2type, type2indices = self.parse_node_type_mapping_txt(
+            self.nodeid2index)
         self.index2type = index2type
         self.type2indices = type2indices
         self.node_context_pairs = node_context_pairs
@@ -60,7 +68,8 @@ class MP2vecDataProcess(object):
         self.count = 0
         self.epoch = 1
 
-    def parse_node_type_mapping_txt(self, nodeid2index):
+    @staticmethod
+    def parse_node_type_mapping_txt(nodeid2index):
         # this method does not modify any class variables
         index2type = {}
         for key, value in nodeid2index.items():
@@ -80,7 +89,8 @@ class MP2vecDataProcess(object):
 
         return index2type, type2indices
 
-    def parse_random_walk_txt(self, random_walk_txt, window_size):
+    @staticmethod
+    def parse_random_walk_txt(random_walk_txt, window_size):
         # this method does not modify any class variables
         # this will NOT make any <UKN> so don't use for NLP.
         word_and_counts = {}

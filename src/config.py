@@ -122,8 +122,18 @@ class Config(object):
             self.walk_length = conf.getint("Model_Setup", "walk_length")
             self.mp_type = conf.get("Model_Setup", "mp_type")
         elif self.model == "metagraph2vec":
-            # TODO
-            pass
+            self.epochs = conf.getint("Model_Setup", "epochs")
+            self.learning_rate = conf.getfloat("Model_Setup", "learning_rate")
+            self.log_dir = data_path + conf.get("Model_Setup", "log_dir")
+            self.log_interval = conf.getint("Model_Setup", "log_interval")
+            self.max_keep_model = conf.getint("Model_Setup", "max_keep_model")
+            self.dim = conf.getint("Model_Setup", "dim")
+            self.negative_samples = conf.getint("Model_Setup", "negative_samples")
+            self.care_type = conf.getint("Model_Setup", "care_type")
+            self.window = conf.getint("Model_Setup", "window")
+            self.walk_times = conf.getint("Model_Setup", "walk_times")
+            self.walk_length = conf.getint("Model_Setup", "walk_length")
+            self.mg_type = conf.get("Model_Setup", "mg_type")
         elif self.model == "PME":
             # TODO
             pass
