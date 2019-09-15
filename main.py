@@ -79,8 +79,8 @@ def main():
             LOG_INTERVAL=config.log_interval,
             MAX_KEEP_MODEL=config.max_keep_model)
     elif config.model == "metagraph2vec":
-        mpg = MetaGraphGenerator()
-        mpg.generate_random(
+        mgg = MetaGraphGenerator()
+        mgg.generate_random(
             config.output_randomwalk,
             config.walk_times,
             config.walk_length,
@@ -110,7 +110,25 @@ def main():
             LOG_INTERVAL=config.log_interval,
             MAX_KEEP_MODEL=config.max_keep_model)
     elif config.model == 'PME':
-        pass
+        pme = PME(
+            dp.input_edge,
+            node2id_dict,
+            relation2id_dict,
+            config.dimension,
+            config.dimensionR,
+            config.loadBinaryFlag,
+            config.outBinaryFlag,
+            config.threads,
+            config.nbatches,
+            config.trainTimes,
+            config.no_validate,
+            config.alpha,
+            config.margin,
+            config.output_embfold
+        )
+        # pme.load()
+        pme.train()
+        pme.out()
     else:
         pass
 

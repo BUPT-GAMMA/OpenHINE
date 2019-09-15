@@ -32,8 +32,7 @@ class MetaPathGenerator:
                             target_node_list = adj_matrix[edge][matrix2id_dict[mp_type[i] + node]]
                             target_node_id = random.choice(
                                 np.nonzero(target_node_list)[0])
-                            target_node = find_dict[mp_type[i +
-                                                            1] + str(target_node_id)]
+                            target_node = find_dict[mp_type[i + 1] + str(target_node_id)]
                             outline += " " + mp_type[i + 1] + target_node
                             node = target_node
                         elif edge_inv in key_set:
@@ -41,8 +40,7 @@ class MetaPathGenerator:
                             target_node_list = tmp_matrix[matrix2id_dict[mp_type[i] + node]]
                             target_node_id = random.choice(
                                 np.nonzero(target_node_list)[0])
-                            target_node = find_dict[mp_type[i +
-                                                            1] + str(target_node_id)]
+                            target_node = find_dict[mp_type[i + 1] + str(target_node_id)]
                             outline += " " + mp_type[i + 1] + target_node
                             node = target_node
                     k = k + length

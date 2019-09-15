@@ -135,7 +135,17 @@ class Config(object):
             self.walk_length = conf.getint("Model_Setup", "walk_length")
             self.mg_type = conf.get("Model_Setup", "mg_type")
         elif self.model == "PME":
-            # TODO
-            pass
+            self.epochs = conf.getint("Model_Setup", "epochs")
+            self.dimension = conf.getint("Model_Setup", "dim")
+            self.dimensionR = conf.getint("Model_Setup", "dimensionR")
+            self.no_validate = conf.getint("Model_Setup", "no_validate")
+            self.threads = conf.getint("Model_Setup", "work_threads")
+            self.trainTimes = conf.getint("Model_Setup", "train_times")
+            self.alpha = conf.getfloat("Model_Setup", "alpha")
+            self.margin = conf.getint("Model_Setup", "margin")
+            self.nbatches = conf.getint("Model_Setup", "nbatches")
+            self.loadBinaryFlag = conf.getint("Model_Setup", "loadBinaryFlag")
+            self.outBinaryFlag = conf.getint("Model_Setup", "outBinaryFlag")
+            self.M = conf.getint("Model_Setup", "M")
         else:
             pass
