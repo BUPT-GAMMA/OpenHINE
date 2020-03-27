@@ -10,7 +10,11 @@ This is an open-source toolkit for Heterogeneous Information Network Embedding(O
 
 #### Contributors：
 
+<<<<<<< HEAD
 DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Jiawei Liu, Nian Liu, Guanyi Chu, Jiayue Liu, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
+=======
+​DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Jiawei Liu, Nian Liu, Guanyi Chu, Jiayue Liu, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
+>>>>>>> 3b2a1b8c81a902153c1e4cd61d60325444ea688d
 
 
 ## Get started
