@@ -4,23 +4,26 @@ This is an open-source toolkit for Heterogeneous Information Network Embedding(O
 
 **convenience provided:**
 
-​	easy to train and evaluate
+- ​	easy to train and evaluate
 
-​	able to extend new/your datasets and models
+- ​	able to extend new/your datasets and models
 
-​	the latest model available: HAN、HeGAN and so on	
+- ​	the latest model available: HAN、HeGAN and so on	
+
 
 ## Get started
 
 ### Requirements and Installation
 
-Python version >= 3.6
+- Python version >= 3.6
 
-PyTorch version >= 1.4.0
 
-TensorFlow version  >= 1.14
+- PyTorch version >= 1.4.0
 
-Keras version >= 2.3.1
+- TensorFlow version  >= 1.14
+
+- Keras version >= 2.3.1
+
 
 ### config/Usage
 
@@ -32,7 +35,7 @@ python train.py -m model_name -d dataset_name -t task_name
 
 e.g.
 
-```
+```python
 python train.py -m Metapath2vec -d acm -t node_classification
 ```
 
@@ -42,23 +45,25 @@ python train.py -m Metapath2vec -d acm -t node_classification
 
 The model parameter could be modified in the file ( ./src/config.ini ).
 
-###### 	common parameter
+- ###### 	common parameter
 
-​		alpha:	learning rate
 
-​		dim:	dimension of output
+​	--alpha:	learning rate
 
-​		epoch: the number of iterations	
+​	--dim:	dimension of output
 
-​		etc...
+​	--epoch: the number of iterations	
 
-###### 	specific parameter
+​	etc...
 
-​		metapath:	the metapath selected
+- ###### 	specific parameter
 
-​		neg_num:	the number of negative samples		
 
-​		etc...
+​	--metapath:	the metapath selected
+
+​	--neg_num:	the number of negative samples		
+
+​	etc...
 
 ### Datasets
 
@@ -73,7 +78,7 @@ If you want to train your own dataset, create the file (./dataset/your_dataset_n
 		19	7	p-c	2
 		19	7	p-a	1
 		11	0	p-c	1
-		0   11 c-p 1
+		0	11	c-p	1
 
 PS：The input graph is directed and the undirected needs to be transformed into directed graph.
 
@@ -139,7 +144,9 @@ PS：The input graph is directed and the undirected needs to be transformed into
 
 ​		Relation Structure-Aware Heterogeneous Information Network Embedding 
 
-​		[RHINE AAAI 2019]	
+​		[RHINE AAAI 2019]
+
+​		only supported in the Linux
 
 ​		src code:https://github.com/rootlu/RHINE 
 
@@ -147,7 +154,7 @@ PS：The input graph is directed and the undirected needs to be transformed into
 
 #### Test
 
-```
+```python
 python test.py -d dataset_name -m model_name -n file_name
 ```
 
@@ -165,6 +172,7 @@ python test.py -d dblp -m HAN -n node.txt
 | ----------------- | -------- | -------- | ------ |
 | DHNE              | 0.7201   | 0.7007   | 0.3280 |
 | HAN               | 0.8401   | 0.8362   | 0.4241 |
+| HeGAN             | 0.8308   | 0.8276   | 0.4335 |
 | HERec             | 0.8308   | 0.8304   | 0.3618 |
 | HIN2vec           | 0.8458   | 0.8449   | 0.4148 |
 | Metapath2vec(PAP) | 0.7823   | 0.7725   | 0.2828 |
@@ -175,6 +183,7 @@ python test.py -d dblp -m HAN -n node.txt
 | ------------------- | -------- | -------- | ------ |
 | DHNE                | ---      | ---      | ---    |
 | HAN                 | 0.8325   | 0.8141   | 0.1260 |
+| HeGAN               | 0.9414   | 0.9364   | 0.7898 |
 | HERec               | 0.9249   | 0.9214   | 0.3412 |
 | HIN2vec             | 0.9495   | 0.9460   | 0.3924 |
 | Metapath2vec(APCPA) | 0.9483   | 0.9448   | 0.7786 |
