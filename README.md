@@ -8,9 +8,9 @@ This is an open-source toolkit for Heterogeneous Information Network Embedding(O
 - ​	able to extend new/your datasets and models
 - ​	the latest model available: HAN、HeGAN and so on	
 
-##### Contributors：
+#### Contributors：
 
-​	DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Jiawei Liu, Nian Liu, Guanyi Chu, Jiayue Liu, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
+DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Jiawei Liu, Nian Liu, Guanyi Chu, Jiayue Liu, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
 
 
 ## Get started
@@ -106,7 +106,11 @@ PS：The input graph is directed and the undirected needs to be transformed into
 
 ##### HeGAN
 
-​		
+​		Adversarial Learning on Heterogeneous Information Network 
+
+​		[HeGAN KDD 2019]
+
+​		src code:https://github.com/librahu/HeGAN
 
 ##### 	HERec
 
