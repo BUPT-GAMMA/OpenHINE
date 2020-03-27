@@ -30,13 +30,13 @@ This is an open-source toolkit for Heterogeneous Information Network Embedding(O
 ##### Input parameter
 
 ```python
-python train.py -m model_name -d dataset_name -t task_name
+python train.py -m model_name -d dataset_name
 ```
 
 e.g.
 
 ```python
-python train.py -m Metapath2vec -d acm -t node_classification
+python train.py -m Metapath2vec -d acm
 ```
 
 
