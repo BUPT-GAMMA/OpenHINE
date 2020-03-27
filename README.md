@@ -1,14 +1,16 @@
 # OpenHINE
 
-This is an open-source toolkit for Heterogeneous Information Network Embedding(OpenHINE) with version 0.1. We can train and test the model more easily without reading obscure open-source code. It provides implementations of many popular models, including: DHNE, HAN, HeGAN, HERec, HIN2vec, Metapath2vec, MetaGraph2vec, RHINE.
+This is an open-source toolkit for Heterogeneous Information Network Embedding(OpenHINE) with version 0.1. We can train and test the model more easily. It provides implementations of many popular models, including: DHNE, HAN, HeGAN, HERec, HIN2vec, Metapath2vec, MetaGraph2vec, RHINE. More materials can be found in [www.shichuan.org](http://www.shichuan.org)
 
 **convenience provided:**
 
 - ​	easy to train and evaluate
-
 - ​	able to extend new/your datasets and models
-
 - ​	the latest model available: HAN、HeGAN and so on	
+
+##### Contributors：
+
+​	DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Jiawei Liu, Nian Liu, Guanyi Chu, Jiayue Liu, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
 
 
 ## Get started
@@ -101,6 +103,10 @@ PS：The input graph is directed and the undirected needs to be transformed into
 ​		 [HAN WWW 2019]
 
 ​		src code:https://github.com/Jhy1993/HAN
+
+##### HeGAN
+
+​		
 
 ##### 	HERec
 
