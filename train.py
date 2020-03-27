@@ -20,8 +20,6 @@ def main():
     # 处理数据
 
     g_hin = HIN(args.dataset, config.data_type, config.relation_list)
-    # node = g_hin.load_node()
-    # node2id_dict, matrix2id_dict,find_dict,relation2id_dict = g_hin.renum(config.output_datafold)
 
 
     # Model selection
@@ -52,25 +50,6 @@ def main():
                 learning_rate=config.alpha, alpha=config.alpha, batch_size=config.batch_size,
                 num_neg_samples=config.neg_num, epochs_to_train=config.epochs, output_embfold=config.out_emd_file,
                 output_modelfold=config.output_modelfold, prefix_path=config.prefix_path, reflect = g_hin.matrix2id_dict)
-    # elif args.model == "HHNE":
-    #     random_walk_txt = config.temp_file + args.dataset + '-' + config.metapath + '.txt'
-    #     node_type_mapping_txt = config.temp_file + 'node_type_mapping.txt'
-    #     config.out_emd_file += args.dataset + '-' + config.metapath + '.txt'
-    #     print("Metapath walking!")
-    #     if len(config.metapath) == 3:
-    #         # data = random_walk_three(config.num_walks, config.walk_length, config.metapath, g_hin, random_walk_txt)
-    #         data = random_walk_three(1, 5, config.metapath, g_hin, random_walk_txt)
-    #     elif len(config.metapath) == 5:
-    #         data = random_walk_five(config.num_walks, config.walk_length, config.metapath, g_hin, random_walk_txt)
-    #
-    #     node_type_mapping_txt = g_hin.node_type_mapping(node_type_mapping_txt)
-    #     dataset = HHNE.Dataset(random_walk_txt=random_walk_txt,window_size=config.window_size)
-    #     print("Train" + str(len(dataset.index2nodeid)))
-    #     pos_holder, tar_holder, tag_holder, pro_holder, grad_pos, grad_tar = HHNE.bulid_model(EMBED_SIZE=config.dim)
-    #     HHNE.TrainHHNE(pos_holder, tar_holder, tag_holder, pro_holder, grad_pos, grad_tar, dataset,
-    #               BATCH_SIZE=config.batch_size, NUM_EPOCHS=config.epochs, NUM_SAMPLED=config.neg_num,
-    #               VOCAB_SIZE=len(dataset.nodeid2index), EMBED_SIZE=config.dim, startingAlpha=config.alpha,
-    #               lr_decay=config.lr_decay, output_embfold=config.out_emd_file)
     elif args.model == "MetaGraph2vec":
         mgg = MetaGraphGenerator()
         random_walk_txt = config.temp_file + 'randomwalk.txt'
@@ -146,7 +125,6 @@ def init_para():
     parser.add_argument('-d', '--dataset', default='acm', type=str, help="Dataset")
     parser.add_argument('-m', '--model', default='MetaGraph2vec', type=str, help='Train model')
     parser.add_argument('-t', '--task', default='node_classification', type=str, help='Evaluation task')
-    # parser.add_argument('-p', '--metapath', default='pap', type=str, help='Metapath sampling')
     parser.add_argument('-s', '--save', default='1', type=str, help='save temproal')
 
     args = parser.parse_args()
