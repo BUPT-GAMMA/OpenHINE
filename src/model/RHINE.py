@@ -17,71 +17,6 @@ from sklearn.metrics import f1_score, normalized_mutual_info_score
 warnings.filterwarnings('ignore')
 
 
-class RHINEDataProcess(object):
-    def __init__(self, output_fold, find_dict,
-                 matrix2id_dict, adj_matrix, relation_list):
-        self.find_dict = find_dict
-        self.matrix2id_dict = matrix2id_dict
-        self.adj_matrix = adj_matrix
-        self.relation_list = relation_list
-        self.output_fold = output_fold
-
-    def generate_triples(self):
-        print(
-            'generating triples for relation {}...'.format(
-                self.relation_list))
-
-        relation_type = self.relation_list.split('+')
-        len_r = 0
-        for r in relation_type:
-            ridx, cidx = np.nonzero(self.adj_matrix[r])
-            ridx = list(ridx)
-            cidx = list(cidx)
-            num_triples = len(ridx)
-            source_type, target_type = r.split('-')
-            tempr = str(source_type) + str(target_type)
-            train_data = open(
-                (str(
-                    self.output_fold) +
-                    'train2id_' +
-                    str(tempr) +
-                    '.txt'),
-                'w')
-            for i in range(num_triples):
-                n1 = self.find_dict[str(source_type) + str(ridx[i])]
-                n2 = self.find_dict[str(target_type) + str(cidx[i])]
-                w = int(self.adj_matrix[r][ridx[i]][cidx[i]])
-                train_data.write(
-                    str(n1) +
-                    '\t' +
-                    str(n2) +
-                    '\t' +
-                    str(len_r) +
-                    '\t' +
-                    str(w) +
-                    '\n')
-            train_data.close()
-            len_r += 1
-
-    def merge_triples(self, relation_category):
-        relation_category = relation_category.split('|')
-        for rc in relation_category:
-            rc = rc.split('==')
-            merged_data = open(
-                (str(self.output_fold) + 'train2id_' + str(rc[0]) + '.txt'), 'w+')
-            relation_list = rc[1].split('+')
-            line_num = 0
-            content = ''
-            for r in relation_list:
-                r = r.split('-')
-                r = str(r[0]) + str(r[1])
-                for line in open(str(self.output_fold) +
-                                 'train2id_' + str(r) + '.txt'):
-                    content += line
-                    line_num += 1
-            merged_data.writelines(str(line_num) + '\n' + content)
-
-
 class Model(nn.Module):
 
     def __init__(self, config):
@@ -228,11 +163,12 @@ class RHINE(Model):
         return loss
 
 
-def TrainRHINE(config):
+def TrainRHINE(config, node2dict):
     con = RHINEConfig()
-    con.set_in_path(config.input_fold)
-    con.set_work_threads(config.work_threads)
-    con.set_train_times(config.train_times)
+    con.set_node2dict(node2dict)
+    con.set_in_path(config.temp_file)
+    con.set_work_threads(config.num_workers)
+    con.set_train_times(config.epochs)
     con.set_IRs_nbatches(config.IRs_nbatches)
     con.set_ARs_nbatches(config.ARs_nbatches)
     con.set_alpha(config.alpha)
@@ -251,8 +187,8 @@ def TrainRHINE(config):
     con.set_export_steps(config.export_steps)
     con.set_export_files(str(config.output_modelfold) +
                          "/RHINE" + "/model.vec." + str(config.mode) + ".tf")
-    con.set_out_files(str(config.output_embfold) + "/RHINE" +
-                      "/embedding.vec." + str(config.mode) + ".json")
+    con.set_out_files(config.out_emd_file + "node.txt")
+
     # print(con)
     con.init()
     # print(con)
@@ -261,13 +197,12 @@ def TrainRHINE(config):
     con.run()
 
     # print('evaluation...')
-    exp = Evaluation()
-    emb_dict = exp.load_emb(str(config.output_embfold) +
-                            "/RHINE" +
-                            "/embedding.vec." +
-                            str(config.mode) +
-                            ".json")
-    print(emb_dict)
+    # exp = Evaluation()
+    # emb_dict = exp.load_emb(config.out_emd_file +
+    #                         "/embedding.vec." +
+    #                         str(config.mode) +
+    #                         ".json")
+    # print(emb_dict)
     # exp.evaluation(emb_dict)
 
 
@@ -298,19 +233,19 @@ class RHINEConfig(object):
         self.trainModel = None
         # print(self.in_path)
         if self.in_path is not None:
-            # print(self.in_path)
+            print(self.in_path)
             # sample IRs
             b = bytes(self.in_path, encoding='utf-8')
-            print(len(self.in_path))
+            # print(len(self.in_path))
             self.lib_IRs.setInPath(
                 ctypes.create_string_buffer(
                     b, len(
                         self.in_path) * 2))
-            # print("T")
             self.lib_IRs.setWorkThreads(self.workThreads)
             self.lib_IRs.randReset()
             # print("YES")
             self.lib_IRs.importTrainFiles()
+
             self.total_IRs = self.lib_IRs.getRelationTotal()
             self.total_nodes = self.lib_IRs.getEntityTotal()
             self.train_total_IRs_triple = self.lib_IRs.getTrainTotal()
@@ -368,6 +303,9 @@ class RHINEConfig(object):
                 'data'][0]
             self.batch_w_addr_ARs = self.batch_w_ARs.__array_interface__[
                 'data'][0]
+
+    def set_node2dict(self, node2dict):
+        self.node2dict = node2dict
 
     def set_opt_method(self, method):
         self.opt_method = method
@@ -469,9 +407,20 @@ class RHINEConfig(object):
     def save_parameters(self, path=None):
         if path is None:
             path = self.out_path
-        f = open(path, "w")
-        f.write(json.dumps(self.get_parameters("list")))
-        f.close()
+        res = self.get_parameter_lists()['ent_embeddings.weight'].numpy().tolist()
+        embedding_dict = {}
+        for node in self.node2dict:
+            embedding_dict[node] = res[self.node2dict[node]]
+        n_node = len(embedding_dict)
+        dim = len(res[0])
+        with open(path, 'w') as f:
+            embedding_str = str(n_node) + '\t' + str(dim) + '\n'
+            for emd in embedding_dict:
+                embedding_str += str(emd) + ' ' + ' '.join([str(x) for x in embedding_dict[emd]]) + '\n'
+            f.write(embedding_str)
+        # f = open(path, "w")
+        # f.write(json.dumps(self.get_parameters("list")))
+        # f.close()
 
     def set_parameters_by_name(self, var_name, tensor):
         self.trainModel.state_dict().get(var_name).copy_(
@@ -525,73 +474,73 @@ class RHINEConfig(object):
                 self.save_pytorch()
             if self.log_on == 1:
                 print('Epoch: {}, loss: {}'.format(epoch, res))
-            if self.evaluation_flag and epoch != 0 and epoch % 100 == 0:
-                emb_json = self.get_parameters("list")
-                evaluation(emb_json)
-                self.trainModel.cuda()
+            # if self.evaluation_flag and epoch != 0 and epoch % 100 == 0:
+            #     emb_json = self.get_parameters("list")
+            #     evaluation(emb_json)
+            #     self.trainModel.cuda()
 
         if self.out_path is not None:
             self.save_parameters(self.out_path)
 
-
-class Evaluation:
-    def __init__(self):
-        self.entity_name_emb_dict = {}
-        np.random.seed(1)
-
-    def load_emb(self, emb_name):
-        """
-        load embeddings
-        :param emb_name:
-        :return:
-        """
-        with open(emb_name, 'r') as emb_file:
-            emb_dict = json.load(emb_file)
-        return emb_dict
-
-    def evaluation(self, emb_dict):
-        entity_emb = emb_dict['ent_embeddings.weight']
-        with open('../data/dblp/node2id.txt', 'r') as e2i_file:
-            lines = e2i_file.readlines()
-
-        paper_id_name_dict = {}
-        for i in range(1, len(lines)):
-            tokens = lines[i].strip().split('\t')
-            if lines[i][0] == 'p':
-                paper_id_name_dict[tokens[1]] = tokens[0]
-
-        for p_id, p_name in paper_id_name_dict.items():
-            p_emb = map(lambda x: float(x), entity_emb[int(p_id)])
-            self.entity_name_emb_dict[p_name] = p_emb
-
-        x_paper = []
-        y_paper = []
-        with open('../data/dblp/paper_label.txt', 'r') as paper_name_label_file:
-            paper_name_label_lines = paper_name_label_file.readlines()
-        for line in paper_name_label_lines:
-            tokens = line.strip().split('\t')
-            x_paper.append(self.entity_name_emb_dict['p' + tokens[0]])
-            y_paper.append(int(tokens[1]))
-        self.kmeans_nmi(x_paper, y_paper, k=4)
-        self.classification(x_paper, y_paper)
-
-    def kmeans_nmi(self, x, y, k):
-        km = KMeans(n_clusters=k)
-        km.fit(x, y)
-        y_pre = km.predict(x)
-
-        nmi = normalized_mutual_info_score(y, y_pre)
-        print('NMI: {}'.format(nmi))
-
-    def classification(self, x, y):
-        x_train, x_valid, y_train, y_valid = train_test_split(
-            x, y, test_size=0.2, random_state=9)
-
-        lr = LogisticRegression()
-        lr.fit(x_train, y_train)
-
-        y_valid_pred = lr.predict(x_valid)
-        micro_f1 = f1_score(y_valid, y_valid_pred, average='micro')
-        macro_f1 = f1_score(y_valid, y_valid_pred, average='macro')
-        print('Macro-F1: {}'.format(macro_f1))
-        print('Micro-F1: {}'.format(micro_f1))
+#
+# class Evaluation:
+#     def __init__(self):
+#         self.entity_name_emb_dict = {}
+#         np.random.seed(1)
+#
+#     def load_emb(self, emb_name):
+#         """
+#         load embeddings
+#         :param emb_name:
+#         :return:
+#         """
+#         with open(emb_name, 'r') as emb_file:
+#             emb_dict = json.load(emb_file)
+#         return emb_dict
+#
+#     def evaluation(self, emb_dict):
+#         entity_emb = emb_dict['ent_embeddings.weight']
+#         with open('../data/dblp/node2id.txt', 'r') as e2i_file:
+#             lines = e2i_file.readlines()
+#
+#         paper_id_name_dict = {}
+#         for i in range(1, len(lines)):
+#             tokens = lines[i].strip().split('\t')
+#             if lines[i][0] == 'p':
+#                 paper_id_name_dict[tokens[1]] = tokens[0]
+#
+#         for p_id, p_name in paper_id_name_dict.items():
+#             p_emb = map(lambda x: float(x), entity_emb[int(p_id)])
+#             self.entity_name_emb_dict[p_name] = p_emb
+#
+#         x_paper = []
+#         y_paper = []
+#         with open('../data/dblp/paper_label.txt', 'r') as paper_name_label_file:
+#             paper_name_label_lines = paper_name_label_file.readlines()
+#         for line in paper_name_label_lines:
+#             tokens = line.strip().split('\t')
+#             x_paper.append(self.entity_name_emb_dict['p' + tokens[0]])
+#             y_paper.append(int(tokens[1]))
+#         self.kmeans_nmi(x_paper, y_paper, k=4)
+#         self.classification(x_paper, y_paper)
+#
+#     def kmeans_nmi(self, x, y, k):
+#         km = KMeans(n_clusters=k)
+#         km.fit(x, y)
+#         y_pre = km.predict(x)
+#
+#         nmi = normalized_mutual_info_score(y, y_pre)
+#         print('NMI: {}'.format(nmi))
+#
+#     def classification(self, x, y):
+#         x_train, x_valid, y_train, y_valid = train_test_split(
+#             x, y, test_size=0.2, random_state=9)
+#
+#         lr = LogisticRegression()
+#         lr.fit(x_train, y_train)
+#
+#         y_valid_pred = lr.predict(x_valid)
+#         micro_f1 = f1_score(y_valid, y_valid_pred, average='micro')
+#         macro_f1 = f1_score(y_valid, y_valid_pred, average='macro')
+#         print('Macro-F1: {}'.format(macro_f1))
+#         print('Micro-F1: {}'.format(micro_f1))

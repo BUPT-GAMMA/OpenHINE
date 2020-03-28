@@ -1,15 +1,16 @@
 # OpenHINE
 
-This is an open-source toolkit for Heterogeneous Information Network Embedding(OpenHINE) with version 0.1. We can train and test the model more easily without reading obscure open-source code. It provides implementations of many popular models, including: DHNE, HAN, HeGAN, HERec, HIN2vec, Metapath2vec, MetaGraph2vec, RHINE.
+This is an open-source toolkit for Heterogeneous Information Network Embedding(OpenHINE) with version 0.1. We can train and test the model more easily. It provides implementations of many popular models, including: DHNE, HAN, HeGAN, HERec, HIN2vec, Metapath2vec, MetaGraph2vec, RHINE. More materials can be found in [www.shichuan.org](http://www.shichuan.org).
 
 **convenience provided:**
 
 - ​	easy to train and evaluate
-
 - ​	able to extend new/your datasets and models
-
 - ​	the latest model available: HAN、HeGAN and so on	
 
+#### Contributors：
+
+DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Jiawei Liu, Nian Liu, Guanyi Chu, Jiayue Liu, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
 
 ## Get started
 
@@ -30,13 +31,13 @@ This is an open-source toolkit for Heterogeneous Information Network Embedding(O
 ##### Input parameter
 
 ```python
-python train.py -m model_name -d dataset_name -t task_name
+python train.py -m model_name -d dataset_name
 ```
 
 e.g.
 
 ```python
-python train.py -m Metapath2vec -d acm -t node_classification
+python train.py -m Metapath2vec -d acm
 ```
 
 
@@ -101,6 +102,14 @@ PS：The input graph is directed and the undirected needs to be transformed into
 ​		 [HAN WWW 2019]
 
 ​		src code:https://github.com/Jhy1993/HAN
+
+##### HeGAN
+
+​		Adversarial Learning on Heterogeneous Information Network 
+
+​		[HeGAN KDD 2019]
+
+​		src code:https://github.com/librahu/HeGAN
 
 ##### 	HERec
 
@@ -182,7 +191,7 @@ python test.py -d dblp -m HAN -n node.txt
 | DBLP dataset        | Micro-F1 | Macro-F1 | NMI    |
 | ------------------- | -------- | -------- | ------ |
 | DHNE                | ---      | ---      | ---    |
-| HAN                 | 0.8325   | 0.8141   | 0.1260 |
+| HAN                 | 0.8325   | 0.8141   | 0.3415 |
 | HeGAN               | 0.9414   | 0.9364   | 0.7898 |
 | HERec               | 0.9249   | 0.9214   | 0.3412 |
 | HIN2vec             | 0.9495   | 0.9460   | 0.3924 |

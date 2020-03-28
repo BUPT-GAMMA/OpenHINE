@@ -1,355 +1,255 @@
-from __future__ import division
-import tensorflow as tf
 import numpy as np
-import json
-import os
-import random
+import torch
+from torch.utils.data import Dataset, DataLoader
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torch.nn import init
 
 
-class MetaPathGenerator:
-    def __init__(self):
-        pass
-
-    # walk length=80  walks per node=40
-    @staticmethod
-    def generate_random(outfilename, numwalks, walklength,
-                        nodelist, find_dict, matrix2id_dict, adj_matrix, mp_type):
-
-        outfile = open(outfilename, 'w')
-
-        length = len(mp_type)
-        key_set = set(adj_matrix.keys())
-        for start_node in nodelist[mp_type[0]]:
-            for j in range(0, numwalks):
-                node = start_node
-                outline = mp_type[0] + node
-                k = 0
-                while k < walklength:
-                    for i in range(0, length - 1):
-                        edge = mp_type[i] + '-' + mp_type[i + 1]
-                        edge_inv = mp_type[i + 1] + '-' + mp_type[i]
-                        if edge in key_set:
-                            target_node_list = adj_matrix[edge][matrix2id_dict[mp_type[i] + node]]
-                            target_node_id = random.choice(
-                                np.nonzero(target_node_list)[0])
-                            target_node = find_dict[mp_type[i + 1] + str(target_node_id)]
-                            outline += " " + mp_type[i + 1] + target_node
-                            node = target_node
-                        elif edge_inv in key_set:
-                            tmp_matrix = np.transpose(adj_matrix[edge_inv])
-                            target_node_list = tmp_matrix[matrix2id_dict[mp_type[i] + node]]
-                            target_node_id = random.choice(
-                                np.nonzero(target_node_list)[0])
-                            target_node = find_dict[mp_type[i + 1] + str(target_node_id)]
-                            outline += " " + mp_type[i + 1] + target_node
-                            node = target_node
-                    k = k + length
-                outfile.write(outline + "\n")
-        outfile.close()
 
 
-class MP2vecDataProcess(object):
-    def __init__(self, random_walk_txt, window_size):
-        index2token, token2index, word_and_counts, index2frequency, node_context_pairs = self.parse_random_walk_txt(
-            random_walk_txt, window_size)
+
+class DataReader:
+    NEGATIVE_TABLE_SIZE = 1e8
+
+    def __init__(self, inputFileName, min_count, care_type):
+
+        self.negatives = []
+        self.discards = []
+        self.negpos = 0
+        self.care_type = care_type
+        self.word2id = dict()
+        self.id2word = dict()
+        self.sentences_count = 0
+        self.token_count = 0
+        self.word_frequency = dict()
+
+        self.inputFileName = inputFileName
+        self.read_words(min_count)
+        self.initTableNegatives()
+        self.initTableDiscards()
+
+    def read_words(self, min_count):
+        word_frequency = dict()
+        for line in open(self.inputFileName):
+            line = line.split()
+        # for line in data.split('\n'):
+        #     line = line.split()
+            if len(line) > 1:
+                self.sentences_count += 1
+                for word in line:
+                    if len(word) > 0:
+                        self.token_count += 1
+                        word_frequency[word] = word_frequency.get(word, 0) + 1
+
+                        if self.token_count % 1000000 == 0:
+                            print("Read " + str(int(self.token_count / 1000000)) + "M words.")
+
+        wid = 0
+        for w, c in word_frequency.items():
+            # if c < min_count:
+            #     continue
+            self.word2id[w] = wid
+            self.id2word[wid] = w
+            self.word_frequency[wid] = c
+            wid += 1
+
+        self.word_count = len(self.word2id)
+        print("Total embeddings: " + str(len(self.word2id)))
+
+    def initTableDiscards(self):
+        # get a frequency table for sub-sampling. Note that the frequency is adjusted by
+        # sub-sampling tricks.
+        t = 0.0001
+        f = np.array(list(self.word_frequency.values())) / self.token_count
+        self.discards = np.sqrt(t / f) + (t / f)
+
+    def initTableNegatives(self):
+        # get a table for negative sampling, if word with index 2 appears twice, then 2 will be listed
+        # in the table twice.
+        pow_frequency = np.array(list(self.word_frequency.values())) ** 0.75
+        words_pow = sum(pow_frequency)
+        ratio = pow_frequency / words_pow
+        count = np.round(ratio * DataReader.NEGATIVE_TABLE_SIZE)
+        for wid, c in enumerate(count):
+            self.negatives += [wid] * int(c)
+        self.negatives = np.array(self.negatives)
+        np.random.shuffle(self.negatives)
+        self.sampling_prob = ratio
+
+    def getNegatives(self, target, size):  # TODO check equality with target
+        if self.care_type == 0:
+            response = self.negatives[self.negpos:self.negpos + size]
+            self.negpos = (self.negpos + size) % len(self.negatives)
+            if len(response) != size:
+                return np.concatenate((response, self.negatives[0:self.negpos]))
+        return response
+
+
+# -----------------------------------------------------------------------------------------------------------------
+
+class Metapath2vecDataset(Dataset):
+    def __init__(self, data, window_size, neg_num):
+        # read in dataset, window_size and input filename
+        self.data = data
         self.window_size = window_size
-        self.nodeid2index = token2index
-        self.index2nodeid = index2token
-        self.index2frequency = index2frequency
-        index2type, type2indices = self.parse_node_type_mapping_txt(
-            self.nodeid2index)
-        self.index2type = index2type
-        self.type2indices = type2indices
-        self.node_context_pairs = node_context_pairs
-        self.prepare_sampling_dist(index2frequency, index2type, type2indices)
-        self.shuffle()
-        self.count = 0
-        self.epoch = 1
+        self.input_file = open(data.inputFileName, encoding="ISO-8859-1")
+        self.neg_num = neg_num
+
+    def __len__(self):
+        # return the number of walks
+        return self.data.sentences_count
+
+    def __getitem__(self, idx):
+        # return the list of pairs (center, context, 5 negatives)
+        while True:
+            line = self.input_file.readline()
+            if not line:
+                self.input_file.seek(0, 0)
+                line = self.input_file.readline()
+            if len(line) > 1:
+                words = line.split()
+                if len(words) > 1:
+                    word_ids = [self.data.word2id[w] for w in words if
+                                w in self.data.word2id and np.random.rand() < self.data.discards[self.data.word2id[w]]]
+                    # and np.random.rand() < self.dataset.discards[self.dataset.word2id[w]]
+                    pair_catch = []
+                    for i, u in enumerate(word_ids):
+                        for j, v in enumerate(
+                                word_ids[max(i - self.window_size, 0):i] + word_ids[i + 1:i + self.window_size]):
+                            # for j, v in enumerate(
+                            #
+                            #         word_ids[max(i - self.window_size, 0):i + self.window_size]):
+
+                            # for j, v in enumerate(
+                            #
+                            #         word_ids[max(i - self.window_size, 0):min(len(word_ids) - 1,i + self.window_size)]):
+                            # end = min[len(word_ids) - 1,i + self.window_size]
+                            assert u < self.data.word_count
+                            assert v < self.data.word_count
+                            # if u == v:
+                            #
+                            #     continue
+                            pair_catch.append((u, v, self.data.getNegatives(v, self.neg_num)))
+                    return pair_catch
 
     @staticmethod
-    def parse_node_type_mapping_txt(nodeid2index):
-        # this method does not modify any class variables
-        index2type = {}
-        for key, value in nodeid2index.items():
-            index2type[value] = key[0]
+    def collate(batches):
+        all_u = [u for batch in batches for u, _, _ in batch if len(batch) > 0]
+        all_v = [v for batch in batches for _, v, _ in batch if len(batch) > 0]
+        all_neg_v = [neg_v for batch in batches for _, _, neg_v in batch if len(batch) > 0]
 
-        type2indices = {}
-        all_types = set(index2type.values())
-        for node_type in all_types:
-            type2indices[node_type] = []
-
-        for node_index, node_type in index2type.items():
-            type2indices[node_type].append(node_index)
-
-        # make array because it will be used with numpy later
-        for node_type in all_types:
-            type2indices[node_type] = np.array(type2indices[node_type])
-
-        return index2type, type2indices
-
-    @staticmethod
-    def parse_random_walk_txt(random_walk_txt, window_size):
-        # this method does not modify any class variables
-        # this will NOT make any <UKN> so don't use for NLP.
-        word_and_counts = {}
-        with open(random_walk_txt) as f:
-            for line in f:
-                sent = [word.strip() for word in line.strip().split(' ')]
-                for word in sent:
-                    if len(word) == 0:
-                        continue
-                    if word in word_and_counts:
-                        word_and_counts[word] += 1
-                    else:
-                        word_and_counts[word] = 1
-
-        print("The number of unique words:%d" % len(word_and_counts))
-        index2token = dict((i, word)
-                           for i, word in enumerate(word_and_counts.keys()))
-        print(index2token)
-        token2index = dict((v, k) for k, v in index2token.items())
-        index2frequency = dict(
-            (token2index[word],
-             freq) for word,
-            freq in word_and_counts.items())
-        # print(index2frequency)
-        # word_word = scipy.sparse.lil_matrix((len(token2index), len(token2index)), dtype=np.int32)
-        node_context_pairs = []  # let's use naive way now
-
-        print("window size %d" % window_size)
-
-        with open(random_walk_txt) as f:
-            for line in f:
-                sent = [token2index[word.strip()] for word in line.split(
-                    ' ') if word.strip() in token2index]
-                sent_length = len(sent)
-                for target_word_position, target_word_idx in enumerate(sent):
-                    start = max(0, target_word_position - window_size)
-                    end = min(
-                        sent_length,
-                        target_word_position +
-                        window_size +
-                        1)
-                    context = sent[start:target_word_position] + \
-                        sent[target_word_position + 1:end + 1]
-                    for contex_word_idx in context:
-                        node_context_pairs.append(
-                            (target_word_idx, contex_word_idx))
-                        # word_word[target_word_idx,contex_word_idx]+=1
-        # word_word=word_word.tocsr()
-        # word_and_counts means token2frequency
-        return index2token, token2index, word_and_counts, index2frequency, node_context_pairs
-
-    def get_one_batch(self):
-        if self.count == len(self.node_context_pairs):
-            self.count = 0
-            self.epoch += 1
-        node_context_pair = self.node_context_pairs[self.count]
-        self.count += 1
-        return node_context_pair
-
-    def get_batch(self, batch_size):
-        pairs = np.array([self.get_one_batch() for i in range(batch_size)])
-        return pairs[:, 0], pairs[:, 1]
-
-    def shuffle(self):
-        random.shuffle(self.node_context_pairs)
-
-    def get_negative_samples(self, pos_index, num_negatives, care_type):
-        # if care_type is True it's a heterogeneous negative sampling
-        # same output format as
-        # https://www.tensorflow.org/api_docs/python/tf/nn/log_uniform_candidate_sampler
-        pos_prob = self.sampling_prob[pos_index]
-        if not care_type:
-            negative_samples = np.random.choice(
-                len(self.index2nodeid), size=num_negatives, replace=False, p=self.sampling_prob)
-            negative_probs = self.sampling_prob[negative_samples]
-        else:
-            node_type = self.index2type[pos_index]
-            sampling_probs = self.type2probs[node_type]
-            sampling_candidates = self.type2indices[node_type]
-            negative_samples_indices = np.random.choice(
-                len(sampling_candidates), size=num_negatives, replace=False, p=sampling_probs)
-
-            negative_samples = sampling_candidates[negative_samples_indices]
-            negative_probs = sampling_probs[negative_samples_indices]
-
-        # print(negative_samples,pos_prob,negative_probs)
-        return negative_samples, pos_prob.reshape((-1, 1)), negative_probs
-
-    def prepare_sampling_dist(self, index2frequency, index2type, type2indices):
-        sampling_prob = np.zeros(len(index2frequency))
-        for i in range(len(index2frequency)):
-            sampling_prob[i] = index2frequency[i]
-        # from
-        # http://mccormickml.com/2017/01/11/word2vec-tutorial-part-2-negative-sampling/
-        sampling_prob = sampling_prob**(3.0 / 4.0)
-
-        # normalize the distributions
-        # for caring type
-        all_types = set(index2type.values())
-        type2probs = {}
-        for node_type in all_types:
-            indicies_for_a_type = type2indices[node_type]
-            type2probs[node_type] = np.array(
-                sampling_prob[indicies_for_a_type])
-            type2probs[node_type] = type2probs[node_type] / \
-                np.sum(type2probs[node_type])
-
-        # if not caring type
-        sampling_prob = sampling_prob / np.sum(sampling_prob)
-
-        self.sampling_prob = sampling_prob
-        self.type2probs = type2probs
+        return torch.LongTensor(all_u), torch.LongTensor(all_v), torch.LongTensor(all_neg_v)
 
 
-def build_model(BATCH_SIZE, VOCAB_SIZE, EMBED_SIZE, NUM_SAMPLED):
-    '''
-    Build the model (i.e. computational graph) and return the placeholders (input and output) and the loss
-    '''
-    # define the placeholders for input and output
-    with tf.name_scope('data'):
-        center_node = tf.placeholder(
-            tf.int32, shape=[BATCH_SIZE], name='center_node')
-        context_node = tf.placeholder(
-            tf.int32, shape=[
-                BATCH_SIZE, 1], name='context_node')
-        negative_samples = (tf.placeholder(tf.int32, shape=[NUM_SAMPLED], name='negative_samples'),
-                            tf.placeholder(
-            tf.float32, shape=[
-                BATCH_SIZE, 1], name='true_expected_count'),
-            tf.placeholder(tf.float32, shape=[NUM_SAMPLED], name='sampled_expected_count'))
-
-    # https://github.com/tensorflow/tensorflow/blob/624bcfe409601910951789325f0b97f520c0b1ee/tensorflow/python/ops/nn_impl.py#L943-L946
-    # Sample the negative labels.
-    #   sampled shape: [num_sampled] tensor
-    #   true_expected_count shape = [batch_size, 1] tensor
-    #   sampled_expected_count shape = [num_sampled] tensor
-
-    # Assemble this part of the graph on the CPU. You can change it to GPU if you have GPU
-    # define weights. In word2vec, it's actually the weights that we care about
-
-    with tf.name_scope('embedding_matrix'):
-        embed_matrix = tf.Variable(tf.random_uniform([VOCAB_SIZE, EMBED_SIZE], -1.0, 1.0),
-                                   name='embed_matrix')
-
-    # define the inference
-    with tf.name_scope('loss'):
-        embed = tf.nn.embedding_lookup(embed_matrix, center_node, name='embed')
-
-        # construct variables for NCE loss
-        nce_weight = tf.Variable(tf.truncated_normal([VOCAB_SIZE, EMBED_SIZE],
-                                                     stddev=1.0 / (EMBED_SIZE ** 0.5)),
-                                 name='nce_weight')
-        nce_bias = tf.Variable(tf.zeros([VOCAB_SIZE]), name='nce_bias')
-
-        # define loss function to be NCE loss function
-        loss = tf.reduce_mean(tf.nn.nce_loss(weights=nce_weight,
-                                             biases=nce_bias,
-                                             labels=context_node,
-                                             inputs=embed,
-                                             sampled_values=negative_samples,
-                                             num_sampled=NUM_SAMPLED,
-                                             num_classes=VOCAB_SIZE), name='loss')
-
-        loss_summary = tf.summary.scalar("loss_summary", loss)
-
-    return center_node, context_node, negative_samples, loss
+"""
+    u_embedding: Embedding for center word.
+    v_embedding: Embedding for neighbor words.
+"""
 
 
-def traning_op(loss, LEARNING_RATE):
-    '''
-    Return optimizer
-    define one step for SGD
-    '''
-    # define optimizer
-    optimizer = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(loss)
-    return optimizer
+class SkipGramModel(nn.Module):
+
+    def __init__(self, emb_size, emb_dimension):
+        super(SkipGramModel, self).__init__()
+        self.emb_size = emb_size
+        self.emb_dimension = emb_dimension
+        self.u_embeddings = nn.Embedding(emb_size, emb_dimension, sparse=True)
+        self.v_embeddings = nn.Embedding(emb_size, emb_dimension, sparse=True)
+
+        initrange = 1.0 / self.emb_dimension
+        init.uniform_(self.u_embeddings.weight.data, -initrange, initrange)
+        init.constant_(self.v_embeddings.weight.data, 0)
+
+    def forward(self, pos_u, pos_v, neg_v):
+        emb_u = self.u_embeddings(pos_u)
+        emb_v = self.v_embeddings(pos_v)
+        emb_neg_v = self.v_embeddings(neg_v)
+
+        score = torch.sum(torch.mul(emb_u, emb_v), dim=1)
+        score = torch.clamp(score, max=10, min=-10)
+        score = -F.logsigmoid(score)
+
+        neg_score = torch.bmm(emb_neg_v, emb_u.unsqueeze(2)).squeeze()
+        neg_score = torch.clamp(neg_score, max=10, min=-10)
+        neg_score = -torch.sum(F.logsigmoid(-neg_score), dim=1)
+
+        return torch.mean(score + neg_score)
+
+    def save_embedding(self, id2word, file_name):
+        embedding = self.u_embeddings.weight.cpu().data.numpy()
+        with open(file_name, 'w') as f:
+            f.write('%d %d\n' % (len(id2word), self.emb_dimension))
+            for wid, w in id2word.items():
+                e = ' '.join(map(lambda x: str(x), embedding[wid]))
+                f.write('%s %s\n' % (w, e))
 
 
-def train(center_node_placeholder, context_node_placeholder, negative_samples_placeholder, loss, dataset,
-          optimizer, NUM_EPOCHS, BATCH_SIZE, NUM_SAMPLED, care_type, LOG_DIRECTORY, LOG_INTERVAL, MAX_KEEP_MODEL):
-    '''
-    tensorflow training loop
-    define SGD training
-    *epoch index starts from 1! not 0.
-    '''
-    care_type = True if care_type == 1 else False
+class Metapath2VecTrainer:
 
-    # For tensorboard
-    merged = tf.summary.merge_all()
-    # Add ops to save and restore all the variables.
-    # tf.train.Saver(max_to_keep=100)
-    saver = tf.train.Saver(max_to_keep=MAX_KEEP_MODEL)
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        total_loss = 0.0  # we use this to calculate late average loss in the last LOG_INTERVAL steps
-        writer = tf.summary.FileWriter(LOG_DIRECTORY, sess.graph)
-        global_iteration = 0
-        iteration = 0
-        while (dataset.epoch <= NUM_EPOCHS):
-            current_epoch = dataset.epoch
-            center_node_batch, context_node_batch = dataset.get_batch(
-                BATCH_SIZE)
-            negative_samples = dataset.get_negative_samples(
-                pos_index=context_node_batch[0], num_negatives=NUM_SAMPLED, care_type=care_type)
-            context_node_batch = context_node_batch.reshape((-1, 1))
-            loss_batch, _, summary_str = sess.run([loss, optimizer, merged],
-                                                  feed_dict={
-                center_node_placeholder: center_node_batch,
-                context_node_placeholder: context_node_batch,
-                negative_samples_placeholder: negative_samples
-            })
-            writer.add_summary(summary_str, global_iteration)
-            total_loss += loss_batch
+    def __init__(self, args):
+        self.data = DataReader(args.temp_file, 0, 0)# min_cont & care_type
 
-            # print(loss_batch)
+        dataset = Metapath2vecDataset(self.data, args.window_size, args.neg_num)
 
-            iteration += 1
-            global_iteration += 1
+        self.dataloader = DataLoader(dataset, batch_size=args.batch_size,
+                                     shuffle=True, num_workers=args.num_workers, collate_fn=dataset.collate)
+        self.output_file_name = args.out_emd_file
+        self.emb_size = len(self.data.word2id)
+        self.emb_dimension = args.dim
+        self.batch_size = args.batch_size
+        self.iterations = args.epochs
 
-            if LOG_INTERVAL > 0:
-                if global_iteration % LOG_INTERVAL == 0:
-                    print(
-                        'Average loss: {:5.1f}'.format(
-                            total_loss / LOG_INTERVAL))
-                    total_loss = 0.0
-                    # save model
-                    model_path = os.path.join(
-                        LOG_DIRECTORY, "/model_temp.ckpt")
-                    save_path = saver.save(sess, model_path)
-                    print("Model saved in file: %s" % save_path)
+        self.initial_lr = args.alpha
 
-            if dataset.epoch - current_epoch > 0:
-                print("Epoch %d end" % current_epoch)
-                dataset.shuffle()
-                # save model
-                model_path = os.path.join(
-                    LOG_DIRECTORY,
-                    "model_epoch%d.ckpt" %
-                    dataset.epoch)
-                save_path = saver.save(sess, model_path)
-                print("Model saved in file: %s" % save_path)
-                print(
-                    'Average loss in this epoch: {:5.1f}'.format(
-                        total_loss / iteration))
-                total_loss = 0.0
-                iteration = 0
+        self.skip_gram_model = SkipGramModel(self.emb_size, self.emb_dimension)
 
-        model_path = os.path.join(LOG_DIRECTORY, "model_final.ckpt")
-        save_path = saver.save(sess, model_path)
-        print("Model saved in file: %s" % save_path)
-        writer.close()
+        self.use_cuda = torch.cuda.is_available()
 
-        print("Save final embeddings as numpy array")
-        np_node_embeddings = tf.get_default_graph().get_tensor_by_name(
-            "embedding_matrix/embed_matrix:0")
-        np_node_embeddings = sess.run(np_node_embeddings)
-        np.savez(
-            os.path.join(
-                LOG_DIRECTORY,
-                "node_embeddings.npz"),
-            np_node_embeddings)
+        self.device = torch.device("cuda" if self.use_cuda else "cpu")
 
-        with open(os.path.join(LOG_DIRECTORY, "index2nodeid.json"), 'w') as f:
-            json.dump(dataset.index2nodeid, f, sort_keys=True, indent=4)
+        if self.use_cuda:
+            self.skip_gram_model.cuda()
+
+    def train(self):
+
+        for iteration in range(self.iterations):
+            # print("\nIteration: " + str(iteration + 1))
+            optimizer = optim.SparseAdam(self.skip_gram_model.parameters(), lr=self.initial_lr)
+
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(self.dataloader))
+            running_loss = 0.0
+            epoch_loss = 0.0
+
+            n = 0
+            for i, sample_batched in enumerate(self.dataloader):
+
+                if len(sample_batched[0]) > 1:
+                    pos_u = sample_batched[0].to(self.device)
+
+                    pos_v = sample_batched[1].to(self.device)
+
+                    neg_v = sample_batched[2].to(self.device)
+
+                    scheduler.step()
+
+                    optimizer.zero_grad()
+
+                    loss = self.skip_gram_model.forward(pos_u, pos_v, neg_v)
+
+                    loss.backward()
+
+                    optimizer.step()
+                    # running_loss = running_loss * 0.9 + loss.item() * 0.1
+                    epoch_loss += loss.item()
+                    # if i > 0 and i % 50 == 0:
+
+                    #     print(" Loss: " + str(running_loss))
+                    n = i
+            print("epoch:" + str(iteration) + " Loss: " + str(epoch_loss / n))
+
+            self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name)
+
+

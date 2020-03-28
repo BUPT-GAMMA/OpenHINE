@@ -3,98 +3,72 @@ import os
 
 
 class Config(object):
-    def __init__(self, config_file):
+    def __init__(self, config_file, args):
         conf = configparser.ConfigParser()
         data_path = os.getcwd()
         try:
             conf.read(config_file)
-        except BaseException:
+        except:
             print("failed!")
 
-        # model_choose
-        self.model = conf.get("Model", "Model")
+        self.num_walks = conf.getint("common_para", "num_walks")
+        self.walk_length = conf.getint("common_para", "walk_length")
+        self.window_size = conf.getint("common_para", "window_size")
+        self.neg_num = conf.getint("common_para", "neg_num")
+        self.batch_size = conf.getint("common_para", "batch_size")
+        self.dim = conf.getint("common_para", "dim")
+        self.num_workers = conf.getint("common_para", "num_workers")
+        self.out_emd_file = conf.get("common_para", "out_emd_file") + args.model + "/"
+        self.temp_file = conf.get("common_para", "temp_file") + args.model + "/"
+        self.alpha = conf.getfloat("common_para", "alpha")
+        self.epochs = conf.getint("common_para", "epochs")
+        self.seed = conf.getint("common_para", "seed")
+        self.lr_decay = conf.getfloat("common_para", "lr_decay")
+        self.log_dir = conf.get("common_para", "log_dir")
+        self.log_interval = conf.getint("common_para", "log_interval")
+
+
 
         # data_setup
-        if conf.has_option("data_setup", "data_type"):
-            self.data_type = conf.get("data_setup", "data_type")
-        else:
-            self.data_type = False
+        self.data_type = conf.get(args.dataset, "data_type")
+        self.relation_list = conf.get(args.dataset, "relation_list")
 
-        if conf.has_option("data_setup", "link_type"):
-            self.line_type = conf.get("data_setup", "link_type")
-        else:
-            self.line_type = False
 
-        if conf.has_option("data_setup", "relation_list"):
-            self.relation_list = conf.get("data_setup", "relation_list")
-        else:
-            self.relation_list = False
+        # training dataset path
+        self.input_edge = conf.get("Data_In", "input_edge")
+        self.output_modelfold = conf.get("Data_Out", "output_modelfold")
 
-        if conf.has_option("data_setup", "combination"):
-            self.combination = conf.get("data_setup", "combination")
+        if conf.has_option("Data_In", "input_id"):
+            self.input_id = data_path + conf.get("Data_In", "input_id")
         else:
-            self.combination = False
-
-        if conf.has_option("data_setup", "RHINE_relation_category"):
-            self.RHINE_relation_category = conf.get(
-                "data_setup", "RHINE_relation_category")
-        else:
-            self.RHINE_relation_category = False
-
-        # training data path
-        if conf.has_option("Data_In", "input_edg"):
-            self.input_edge = data_path + conf.get("Data_In", "input_edg")
-        else:
-            self.input_edge = False
-
-        # if conf.has_option("Data_In", "input_id"):
-        #     self.input_id = data_path + conf.get("Data_In", "input_id")
-        # else:
-        #     self.input_id = False
+            self.input_id = False
 
         if conf.has_option("Data_In", "input_fold"):
             self.input_fold = data_path + conf.get("Data_In", "input_fold")
         else:
             self.input_fold = False
 
-        if conf.has_option("Data_Out", "output_randomwalk"):
-            self.output_randomwalk = data_path + \
-                conf.get("Data_Out", "output_randomwalk")
-
-        if conf.has_option("Data_Out", "output_embfold"):
-            self.output_embfold = data_path + \
-                conf.get("Data_Out", "output_embfold")
-        else:
-            self.output_embfold = False
-
-        if conf.has_option("Data_Out", "output_modelfold"):
-            self.output_modelfold = data_path + \
-                conf.get("Data_Out", "output_modelfold")
-        else:
-            self.output_modelfold = False
 
         if conf.has_option("Data_Out", "output_datafold"):
-            self.output_datafold = data_path + \
-                conf.get("Data_Out", "output_datafold")
+            self.output_datafold = data_path + conf.get("Data_Out", "output_datafold")
         else:
             self.output_datafold = False
 
-        if self.model == "RHINE":
+        if args.model == "RHINE":
+            self.relation_category = conf.get("RHINE", "relation_category")
+
             self.data_set = conf.get("Model_Setup", "data_set")
+            self.combination = conf.get("RHINE", "combination")
+            self.link_type = conf.get("RHINE", "link_type")
             self.mode = conf.get("Model_Setup", "mode")
-            self.work_threads = conf.getint("Model_Setup", "work_threads")
-            self.epochs = conf.getint("Model_Setup", "epochs")
-            self.IRs_nbatches = conf.getint("Model_Setup", "IRs_nbatches")
-            self.ARs_nbatches = conf.getint("Model_Setup", "ARs_nbatches")
-            self.alpha = conf.getfloat("Model_Setup", "alpha")
-            self.margin = conf.getint("Model_Setup", "margin")
-            self.dim = conf.getint("Model_Setup", "dim")
+            self.IRs_nbatches = conf.getint("RHINE", "IRs_nbatches")
+            self.ARs_nbatches = conf.getint("RHINE", "ARs_nbatches")
+
+            self.margin = conf.getint("RHINE", "margin")
             self.ent_neg_rate = conf.getint("Model_Setup", "ent_neg_rate")
             self.rel_neg_rate = conf.getint("Model_Setup", "rel_neg_rate")
             self.evaluation_flag = conf.get("Model_Setup", "evaluation_flag")
-            self.train_times = conf.getint("Model_Setup", "train_times")
             self.log_on = conf.getint("Model_Setup", "log_on")
-            self.lr_decay = conf.getfloat("Model_Setup", "lr_decay")
             self.exportName = conf.get("Model_Setup", "exportName")
             if self.exportName == 'None':
                 self.importName = None
@@ -107,45 +81,46 @@ class Config(object):
             if self.optimizer == 'None':
                 self.optimizer = None
             self.weight_decay = conf.get("Model_Setup", "weight_decay")
-
-        elif self.model == "metapath2vec":
-            self.epochs = conf.getint("Model_Setup", "epochs")
-            self.learning_rate = conf.getfloat("Model_Setup", "learning_rate")
-            self.log_dir = data_path + conf.get("Model_Setup", "log_dir")
-            self.log_interval = conf.getint("Model_Setup", "log_interval")
-            self.max_keep_model = conf.getint("Model_Setup", "max_keep_model")
-            self.dim = conf.getint("Model_Setup", "dim")
-            self.negative_samples = conf.getint("Model_Setup", "negative_samples")
-            self.care_type = conf.getint("Model_Setup", "care_type")
-            self.window = conf.getint("Model_Setup", "window")
-            self.walk_times = conf.getint("Model_Setup", "walk_times")
-            self.walk_length = conf.getint("Model_Setup", "walk_length")
-            self.mp_type = conf.get("Model_Setup", "mp_type")
-        elif self.model == "metagraph2vec":
-            self.epochs = conf.getint("Model_Setup", "epochs")
-            self.learning_rate = conf.getfloat("Model_Setup", "learning_rate")
-            self.log_dir = data_path + conf.get("Model_Setup", "log_dir")
-            self.log_interval = conf.getint("Model_Setup", "log_interval")
-            self.max_keep_model = conf.getint("Model_Setup", "max_keep_model")
-            self.dim = conf.getint("Model_Setup", "dim")
-            self.negative_samples = conf.getint("Model_Setup", "negative_samples")
-            self.care_type = conf.getint("Model_Setup", "care_type")
-            self.window = conf.getint("Model_Setup", "window")
-            self.walk_times = conf.getint("Model_Setup", "walk_times")
-            self.walk_length = conf.getint("Model_Setup", "walk_length")
-            self.mg_type = conf.get("Model_Setup", "mg_type")
-        elif self.model == "PME":
-            self.epochs = conf.getint("Model_Setup", "epochs")
-            self.dimension = conf.getint("Model_Setup", "dim")
-            self.dimensionR = conf.getint("Model_Setup", "dimensionR")
-            self.no_validate = conf.getint("Model_Setup", "no_validate")
-            self.threads = conf.getint("Model_Setup", "work_threads")
-            self.trainTimes = conf.getint("Model_Setup", "train_times")
-            self.alpha = conf.getfloat("Model_Setup", "alpha")
-            self.margin = conf.getint("Model_Setup", "margin")
-            self.nbatches = conf.getint("Model_Setup", "nbatches")
-            self.loadBinaryFlag = conf.getint("Model_Setup", "loadBinaryFlag")
-            self.outBinaryFlag = conf.getint("Model_Setup", "outBinaryFlag")
-            self.M = conf.getint("Model_Setup", "M")
+        elif args.model == "HERec":
+            self.metapath_list = conf.get("HERec", "metapath_list")
+        elif args.model == "Metapath2vec":
+            self.metapath = conf.get("Metapath2vec", "metapath")
+        elif args.model == "DHNE":
+            self.scale = conf.get("DHNE", "scale")
+            self.hidden_size = conf.getint("DHNE", "hidden_size")
+            self.prefix_path = conf.get("DHNE", "prefix_path")
+            self.triple_hyper = conf.get("DHNE", "triple_hyper")
+        elif args.model == "HHNE":
+            self.metapath = conf.get("HHNE", "metapath")
+        elif args.model == "MetaGraph2vec":
+            self.care_type = conf.getint("MetaGraph2vec", "care_type")
+            self.max_keep_model = conf.getint("MetaGraph2vec", "max_keep_model")
+        elif args.model == "PME":
+            self.dimensionR = conf.getint("PME", "dimensionR")
+            self.no_validate = conf.getint("PME", "no_validate")
+            self.margin = conf.getint("PME", "margin")
+            self.nbatches = conf.getint("PME", "nbatches")
+            self.loadBinaryFlag = conf.getint("PME", "loadBinaryFlag")
+            self.outBinaryFlag = conf.getint("PME", "outBinaryFlag")
+            self.M = conf.getint("PME", "M")
+        elif args.model == "HAN":
+            self.patience = 100
+            self.mp_list = conf.get("HAN", "metapath_list")
+        elif args.model == "HeGAN":
+            self.lambda_gen = conf.getfloat("HeGAN", "lambda_gen")
+            self.lambda_dis = conf.getfloat("HeGAN", "lambda_dis")
+            self.n_sample = conf.getint("HeGAN", "n_sample")
+            self.lr_gen = conf.getfloat("HeGAN", "lr_gen")
+            self.lr_dis = conf.getfloat("HeGAN", "lr_dis")
+            self.n_epoch = conf.getint("HeGAN", "n_epoch")
+            self.saves_step = conf.getint("HeGAN", "saves_step")
+            self.sig = conf.getfloat("HeGAN", "sig")
+            self.d_epoch = conf.getint("HeGAN", "d_epoch")
+            self.g_epoch = conf.getint("HeGAN", "g_epoch")
+            self.n_emb = conf.getint("HeGAN", "n_emb")
+            self.pretrain_node_emb_filename = conf.get("HeGAN", "pretrain_node_emb_filename")
+            self.emb_filenames = self.out_emd_file
+            self.model_log = self.output_modelfold + 'HeGAN/'
+            self.label_smooth = conf.getfloat("HeGAN", "label_smooth")
         else:
             pass
