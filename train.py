@@ -6,21 +6,21 @@ from src.model.Metapath2vec import *
 from src.utils.sampler import *
 from src.utils.utils import *
 from src.model.DHNE import *
-from src.model import HHNE
-from src.model.MetaGraph2vec import *
-from src.model.PME import *
 from src.model.HERec import DW
 from src.model.HIN2vec import *
+from src.model.HAN import *
+from src.model.HeGAN import HeGAN
+import warnings
+
+warnings.filterwarnings('ignore')
 
 
 def main():
     args = init_para()
     config_file = ["./src/config.ini"]
     config = Config(config_file, args)
-    # 处理数据
 
     g_hin = HIN(args.dataset, config.data_type, config.relation_list)
-
 
     # Model selection
     if args.model == "RHINE":
@@ -43,89 +43,55 @@ def main():
         print("Training")
         m2v.train()
     elif args.model == "DHNE":
-        mp_random_walk(g_hin, output_datafold=config.temp_file, scale=config.scale, tup="a-p-s")
+        hyper_edge_sample(g_hin, output_datafold=config.temp_file, scale=config.scale, tup=config.triple_hyper)
         dataset = read_data_sets(train_dir=config.temp_file)
         dim_feature = [sum(dataset.train.nums_type) - n for n in dataset.train.nums_type]
         Process(dataset, dim_feature, embedding_size=config.dim, hidden_size=config.hidden_size,
                 learning_rate=config.alpha, alpha=config.alpha, batch_size=config.batch_size,
                 num_neg_samples=config.neg_num, epochs_to_train=config.epochs, output_embfold=config.out_emd_file,
-                output_modelfold=config.output_modelfold, prefix_path=config.prefix_path, reflect = g_hin.matrix2id_dict)
+                output_modelfold=config.output_modelfold, prefix_path=config.prefix_path, reflect=g_hin.matrix2id_dict)
+
     elif args.model == "MetaGraph2vec":
+        config.temp_file += 'graph_rw.txt'
+        config.out_emd_file += 'node.txt'
         mgg = MetaGraphGenerator()
-        random_walk_txt = config.temp_file + 'randomwalk.txt'
-        mgg.generate_random(
-            random_walk_txt,
-            config.num_walks,
-            config.walk_length,
-            g_hin.node,
-            g_hin.find_dict,
-            g_hin.matrix2id_dict,
-            g_hin.adj_matrix,
-            config.mg_type)
-        dataset = MG2vecDataProcess(
-            random_walk_txt,
-            config.window_size)
-        center_node_placeholder, context_node_placeholder, negative_samples_placeholder, loss = build_model(
-            1, len(dataset.nodeid2index), config.dim, config.neg_num)
-        optimizer = traning_op(loss, config.alpha)
-        train(
-            center_node_placeholder,
-            context_node_placeholder,
-            negative_samples_placeholder,
-            loss,
-            dataset,
-            optimizer,
-            NUM_EPOCHS=config.epochs,
-            BATCH_SIZE=config.batch_size,
-            NUM_SAMPLED=config.neg_num,
-            care_type=config.care_type,
-            LOG_DIRECTORY=config.log_dir,
-            LOG_INTERVAL=config.log_interval,
-            MAX_KEEP_MODEL=config.max_keep_model)
-    elif args.model == "PME":
-        pme = PME(
-            g_hin.input_edge,
-            g_hin.node2id_dict,
-            g_hin.relation2id_dict,
-            config.dim,
-            config.dimensionR,
-            config.loadBinaryFlag,
-            config.outBinaryFlag,
-            config.num_workers,
-            config.nbatches,
-            config.epochs,
-            config.no_validate,
-            config.alpha,
-            config.margin,
-            config.out_emd_file
-        )
-        # pme.load()
-        pme.train()
-        pme.out()
-    elif args.model == "PTE":
-        pass
+        if args.dataset == "acm":
+            mgg.generate_random_three(config.temp_file, config.num_walks, config.walk_length, g_hin.node,
+                                      g_hin.relation_dict)
+        elif args.dataset == "dblp":
+            mgg.generate_random_four(config.temp_file, config.num_walks, config.walk_length, g_hin.node,
+                                     g_hin.relation_dict)
+        model = Metapath2VecTrainer(config)
+        print("Training")
+        model.train()
     elif args.model == "HERec":
         mp_list = config.metapath_list.split("|")
         for mp in mp_list:
-            HERec_gen_neighbour(g_hin, mp, config.temp_file)
+            # HERec_gen_neighbour(g_hin, mp, config.temp_file)
             config.input = config.temp_file + mp + ".txt"
             config.out_put = config.out_emd_file + mp + ".txt"
             DW(config)
         HERec_union_metapth(config.out_emd_file, mp_list, len(g_hin.node[mp_list[0][0]]), config.dim)
     elif args.model == "HIN2vec":
         HIN2vec(g_hin, config.out_emd_file, config)
+    elif args.model == "HAN":
+        data_process = HAN_process(g_hin, config.mp_list, args.dataset)
+        config.out_emd_file += 'node.txt'
+        m = HAN(config, data_process)
+        m.train()
+    elif args.model == "HeGAN":
+        model = HeGAN(g_hin, args, config)
+        model.train(config, g_hin.node2id_dict)
     else:
         pass
-    # evaluation
-    # if args.task == 'node_classification':
+
 
 
 def init_para():
     parser = argparse.ArgumentParser(description="OPEN-HINE")
     parser.add_argument('-d', '--dataset', default='acm', type=str, help="Dataset")
     parser.add_argument('-m', '--model', default='MetaGraph2vec', type=str, help='Train model')
-    parser.add_argument('-t', '--task', default='node_classification', type=str, help='Evaluation task')
-    parser.add_argument('-s', '--save', default='1', type=str, help='save temproal')
+
 
     args = parser.parse_args()
     return args

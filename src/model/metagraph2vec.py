@@ -5,90 +5,6 @@ import json
 import os
 import random
 
-
-class MetaGraphGenerator:
-    def __init__(self):
-        pass
-
-    # walk length=80  walks per node=40
-    def generate_random(self, outfilename, numwalks, walklength,
-                        nodelist, find_dict, matrix2id_dict, adj_matrix, mg_type):
-
-        outfile = open(outfilename, 'w')
-
-        length = len(mg_type)
-        key_set = set(adj_matrix.keys())
-        for start_node in nodelist[mg_type[0]]:
-            for j in range(0, numwalks):
-                node = start_node
-                outline = mg_type[0] + node
-                k = 0
-                while k < walklength:
-                    i = 0
-                    head = mg_type[0]
-                    while i < length - 1:
-                        w = i + 1
-                        print('i:' + str(i))
-                        print('w:' + str(w))
-                        if mg_type[w] == '(':
-                            w = i + 2
-                            while mg_type[w] != ')':
-                                edge = head + '-' + mg_type[w]
-                                edge_inv = mg_type[w] + '-' + head
-                                if edge in key_set:
-                                    target_node_list = adj_matrix[edge][matrix2id_dict[head + node]]
-                                    if np.size(np.nonzero(target_node_list)[0]) > 0:
-                                        target_node_id = random.choice(np.nonzero(target_node_list)[0])
-                                        target_node = find_dict[mg_type[w] + str(target_node_id)]
-                                        outline += " " + mg_type[w] + target_node
-                                        node = target_node
-                                        head = mg_type[w]
-                                        break
-                                elif edge_inv in key_set:
-                                    tmp_matrix = np.transpose(adj_matrix[edge_inv])
-                                    target_node_list = tmp_matrix[matrix2id_dict[head + node]]
-                                    if np.size(np.nonzero(target_node_list)[0]) > 0:
-                                        target_node_id = random.choice(np.nonzero(target_node_list)[0])
-                                        target_node = find_dict[mg_type[w] + str(target_node_id)]
-                                        outline += " " + mg_type[w] + target_node
-                                        node = target_node
-                                        head = mg_type[w]
-                                        break
-                                w = w + 1
-                            while w < length and mg_type[w] != ')':
-                                w = w + 1
-                            i = w
-                            print('head:' + head)
-                            print('node:' + node)
-                        else:
-                            edge = head + '-' + mg_type[w]
-                            edge_inv = mg_type[w] + '-' + head
-                            if edge in key_set:
-                                target_node_list = adj_matrix[edge][matrix2id_dict[head + node]]
-                                target_node_id = random.choice(
-                                    np.nonzero(target_node_list)[0])
-                                target_node = find_dict[mg_type[w] + str(target_node_id)]
-                                outline += " " + mg_type[w] + target_node
-                                node = target_node
-                                head = mg_type[w]
-                            elif edge_inv in key_set:
-                                tmp_matrix = np.transpose(adj_matrix[edge_inv])
-                                target_node_list = tmp_matrix[matrix2id_dict[head + node]]
-                                target_node_id = random.choice(
-                                    np.nonzero(target_node_list)[0])
-                                target_node = find_dict[mg_type[w] + str(target_node_id)]
-                                outline += " " + mg_type[w] + target_node
-                                node = target_node
-                                head = mg_type[w]
-                            i = w
-                            print('head:' + head)
-                            print('node:' + node)
-                    k = k + length
-                    print(outline)
-                outfile.write(outline + "\n")
-        outfile.close()
-
-
 class MG2vecDataProcess(object):
     def __init__(self, random_walk_txt, window_size):
         index2token, token2index, word_and_counts, index2frequency, node_context_pairs = self.parse_random_walk_txt(
@@ -327,6 +243,7 @@ def train(center_node_placeholder, context_node_placeholder, negative_samples_pl
         global_iteration = 0
         iteration = 0
         while (dataset.epoch <= NUM_EPOCHS):
+            print("s")
             current_epoch = dataset.epoch
             center_node_batch, context_node_batch = dataset.get_batch(
                 BATCH_SIZE)
