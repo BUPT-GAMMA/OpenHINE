@@ -199,6 +199,8 @@ python test.py -d dblp -m HAN -n node.txt
 | MetaGraph2vec       | 0.9138   | 0.9093   | 0.6136 |
 | RHINE               | 0.9360   | 0.9316   | 0.7356 |
 
+HAN uses the dataset without features.
+
 ## Future work
 
 Note that OpenHINE is just version 0.1 and **still actively under development**, so feedback and contributions are welcome. Feel free to submit your questions as a issue.
