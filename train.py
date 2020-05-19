@@ -8,7 +8,7 @@ from src.utils.utils import *
 from src.model.DHNE import *
 # from src.model import HHNE
 # from src.model.MetaGraph2vec import *
-from src.model.PME import *
+#from src.model.PME import *
 from src.model.HERec import DW
 from src.model.HIN2vec import *
 from src.model.HAN import *
@@ -85,29 +85,29 @@ def main():
         model = Metapath2VecTrainer(config)
         print("Training")
         model.train()
-    elif args.model == "PME":
-        pme = PME(
-            g_hin.input_edge,
-            g_hin.node2id_dict,
-            g_hin.relation2id_dict,
-            config.dim,
-            config.dimensionR,
-            config.loadBinaryFlag,
-            config.outBinaryFlag,
-            config.num_workers,
-            config.nbatches,
-            config.epochs,
-            config.no_validate,
-            config.alpha,
-            config.margin,
-            config.M,
-            config.out_emd_file
-        )
-        # pme.load()
-        pme.train()
-        pme.out()
-    elif args.model == "PTE":
-        pass
+    # elif args.model == "PME":
+    #     pme = PME(
+    #         g_hin.input_edge,
+    #         g_hin.node2id_dict,
+    #         g_hin.relation2id_dict,
+    #         config.dim,
+    #         config.dimensionR,
+    #         config.loadBinaryFlag,
+    #         config.outBinaryFlag,
+    #         config.num_workers,
+    #         config.nbatches,
+    #         config.epochs,
+    #         config.no_validate,
+    #         config.alpha,
+    #         config.margin,
+    #         config.M,
+    #         config.out_emd_file
+    #     )
+    #     # pme.load()
+    #     pme.train()
+    #     pme.out()
+    # elif args.model == "PTE":
+    #     pass
     elif args.model == "HERec":
         mp_list = config.metapath_list.split("|")
         for mp in mp_list:

@@ -141,7 +141,7 @@ PS：The input graph is directed and the undirected needs to be transformed into
 
 ​		the python version implemented by DGL:https://github.com/dmlc/dgl/tree/master/examples/pytorch/metapath2vec 
 
-##### 	MetaGrapth2vec
+##### 	MetaGraph2vec
 
 ​		MetaGraph2Vec: Complex Semantic Path Augmented Heterogeneous Network Embedding
 
