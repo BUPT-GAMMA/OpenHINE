@@ -83,39 +83,49 @@ If you want to train your own dataset, create the file (./dataset/your_dataset_n
 
 PS：The input graph is directed and the undirected needs to be transformed into directed graph.
 
+###### Input:	feature	
+
+​		number_of_nodes embedding_dim
+
+​		node_name dim1 dim2 
+
+e.g.
+
+```
+11246	2
+a1814 0.06386946886777878 -0.04781734198331833
+a0 ... ...
+```
+
+
+
 ## Model
 
 #### Available
 
-##### 	DHNE
+##### 	[DHNE AAAI 2018]
 
 ​		Structural Deep Embedding for Hyper-Networks 
 
-​		[DHNE AAAI 2018]
-
 ​		src code:https://github.com/tadpole/DHNE
 
-##### 	HAN
+##### 	[HAN WWW 2019]
 
 ​		Heterogeneous Graph Attention Network
 
-​		 [HAN WWW 2019]
+​		Add feature.txt into the input folder or set the parameter "featype": "adj", which means that you will use adjacency matrix as your feature.
 
 ​		src code:https://github.com/Jhy1993/HAN
 
-##### HeGAN
+##### [HeGAN KDD 2019]
 
 ​		Adversarial Learning on Heterogeneous Information Network 
 
-​		[HeGAN KDD 2019]
-
 ​		src code:https://github.com/librahu/HeGAN
 
-##### 	HERec
+##### 	[HERec TKDE 2018]
 
 ​		Heterogeneous Information Network Embedding for Recommendation 
-
-​		[HERec TKDE 2018]
 
 ​		src code:https://github.com/librahu/HERec
 
@@ -123,37 +133,29 @@ PS：The input graph is directed and the undirected needs to be transformed into
 
 ​			metapath_list: pap|psp	(split by "|")
 
-##### 	HIN2vec
+##### 	[HIN2Vec CIKM 2017]
 
 ​		HIN2Vec: Explore Meta-paths in Heterogeneous Information Networks for Representation Learning 
 
-​		[HIN2Vec CIKM 2017]
-
 ​		src code:https://github.com/csiesheep/hin2vec
 
-##### 	Metapath2vec	
+##### 	[metapath2vec KDD 2017]
 
 ​		metapath2vec: Scalable Representation Learning for Heterogeneous Networks 
-
-​		[metapath2vec KDD 2017]
 
 ​		src code:https://ericdongyx.github.io/metapath2vec/m2v.html
 
 ​		the python version implemented by DGL:https://github.com/dmlc/dgl/tree/master/examples/pytorch/metapath2vec 
 
-##### 	MetaGraph2vec
+##### 	[MetaGraph2Vec PAKDD 2018]
 
 ​		MetaGraph2Vec: Complex Semantic Path Augmented Heterogeneous Network Embedding
 
-​		[MetaGraph2Vec PAKDD 2018]
-
 ​		src code:https://github.com/daokunzhang/MetaGraph2Vec
 
-##### 	RHINE
+##### 	[RHINE AAAI 2019]
 
 ​		Relation Structure-Aware Heterogeneous Information Network Embedding 
-
-​		[RHINE AAAI 2019]
 
 ​		only supported in the Linux
 
@@ -174,6 +176,22 @@ e.g.
 ```python
 python test.py -d dblp -m HAN -n node.txt
 ```
+
+###### output:	embedding	
+
+​		number_of_nodes embedding_dim
+
+​		node_name dim1 dim2 
+
+e.g.
+
+```
+11246	2
+a1814 0.06386946886777878 -0.04781734198331833
+a0 ... ...
+```
+
+
 
 ## Evaluation/Task
 
