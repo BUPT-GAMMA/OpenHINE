@@ -338,8 +338,23 @@ class HAN_process():
         self.find_dict = g_hin.find_dict
         self.mp_list = mp_list.split("|")
         self.dataset = dataset
+        self.n_nodes = len(g_hin.node[self.s])
+        g_hin.load_fea()
+        self.feature = g_hin.feature
+
+
+    def fea_process(self):
+        dim = len(self.feature[self.s + "0"])
+        fea_array = np.zeros((self.n_nodes, dim), float)
+        for i in range(self.n_nodes):
+            f = self.feature[self.s + str(i)]
+            id = self.matrix2id_dict[self.s + str(i)]
+            fea_array[id][:] = f
+        return fea_array
+
 
     def data_process(self):
+        truefeatures = self.fea_process()
         rownetworks = []
         for mp in self.mp_list:
             if mp[0] != self.s:
@@ -399,7 +414,7 @@ class HAN_process():
                                                                                               train_idx.shape,
                                                                                               val_idx.shape,
                                                                                               test_idx.shape))
-        truefeatures = 0
+
         truefeatures_list = [truefeatures, truefeatures, truefeatures]
         return rownetworks, truefeatures_list, y_train, y_val, y_test, train_mask, val_mask, test_mask
 

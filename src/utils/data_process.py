@@ -1,15 +1,16 @@
 import numpy as np
 from scipy.sparse import csr_matrix
-
+from src.utils.utils import str_list_to_float
 
 def inverse_relation(s):
     return s[2] + s[1] + s[0]
 
 
 class HIN(object):
-    def __init__(self, edgefile, data_type, relation_list):
-        self.input_edge = './dataset/' + edgefile + '/edge.txt'
-        self.label_file = './dataset/' + edgefile + '/label.txt'
+    def __init__(self, inputfold, data_type, relation_list):
+        self.input_edge = inputfold + 'edge.txt'
+        self.label_file = inputfold + 'label.txt'
+        self.fea_file = inputfold + 'feature.txt'
         self.data_type = data_type
         self.relation_list = relation_list.split('+')
         self.relation2id_dict = {}
@@ -19,6 +20,7 @@ class HIN(object):
         self.node = self.load_node()
         self.adj_matrix = {}
         self.relation_dict = self.load_relation()
+        self.feature = {}
 
     def load_node(self):
         node = {}
@@ -117,4 +119,10 @@ class HIN(object):
                 line = i.strip().split()
                 label[line[0]] = int(line[1])
         return label
+
+    def load_fea(self):
+        with open(self.fea_file) as infile:
+            for line in infile.readlines()[1:]:
+                emd = line.strip().split()
+                self.feature[emd[0]] = np.array(str_list_to_float(emd[1:]))
 

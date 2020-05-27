@@ -59,7 +59,7 @@ class HAN():
         self.config = tf.ConfigProto()
         self.config.gpu_options.allow_growth = True
         self.checkpt_file = './output/temp/model.ckpt'
-        self.featype = 'adj'
+        self.featype = config.featype
         self.data_process =data_process
         self.out_emd_file = config.out_emd_file
 

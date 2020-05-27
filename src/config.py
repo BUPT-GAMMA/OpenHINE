@@ -18,8 +18,7 @@ class Config(object):
         self.batch_size = conf.getint("common_para", "batch_size")
         self.dim = conf.getint("common_para", "dim")
         self.num_workers = conf.getint("common_para", "num_workers")
-        self.out_emd_file = conf.get("common_para", "out_emd_file") + args.model + "/"
-        self.temp_file = conf.get("common_para", "temp_file") + args.model + "/"
+
         self.alpha = conf.getfloat("common_para", "alpha")
         self.epochs = conf.getint("common_para", "epochs")
         self.seed = conf.getint("common_para", "seed")
@@ -35,24 +34,11 @@ class Config(object):
 
 
         # training dataset path
-        self.input_edge = conf.get("Data_In", "input_edge")
         self.output_modelfold = conf.get("Data_Out", "output_modelfold")
+        self.input_fold = conf.get("Data_In", "input_fold") + args.dataset  + '/'
+        self.out_emd_file = conf.get("Data_Out", "out_emd_file") + args.model + "/"
+        self.temp_file = conf.get("Data_Out", "temp_file") + args.model + "/"
 
-        if conf.has_option("Data_In", "input_id"):
-            self.input_id = data_path + conf.get("Data_In", "input_id")
-        else:
-            self.input_id = False
-
-        if conf.has_option("Data_In", "input_fold"):
-            self.input_fold = data_path + conf.get("Data_In", "input_fold")
-        else:
-            self.input_fold = False
-
-
-        if conf.has_option("Data_Out", "output_datafold"):
-            self.output_datafold = data_path + conf.get("Data_Out", "output_datafold")
-        else:
-            self.output_datafold = False
 
         if args.model == "RHINE":
             self.relation_category = conf.get("RHINE", "relation_category")
@@ -106,6 +92,7 @@ class Config(object):
         elif args.model == "HAN":
             self.patience = 100
             self.mp_list = conf.get("HAN", "metapath_list")
+            self.featype = conf.get("HAN", "featype")
         elif args.model == "HeGAN":
             self.lambda_gen = conf.getfloat("HeGAN", "lambda_gen")
             self.lambda_dis = conf.getfloat("HeGAN", "lambda_dis")
