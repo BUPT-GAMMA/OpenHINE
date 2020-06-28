@@ -73,58 +73,81 @@ def write2file(mtx, file):
     print(str(total))
 
 
-def random_walk_three(num_walks, walk_length, mode, data_source, outfilename):
-    relation1 = data_source.relation_dict[mode[0] + '-' + mode[1]]
-    relation2 = data_source.relation_dict[mode[1] + '-' + mode[2]]
+
+def mp_based_random_walk(num_walks, walk_length, mode, data_source, outfilename):
+    # random.seed(2019)
+    assert mode[0]==mode[-1] # MP based RW is only applicable for metapaths with same source and target nodes.
+
+    relations = []
+    for i in range(len(mode) - 1):
+        relations.append(data_source.relation_dict[mode[i] + '-' + mode[i + 1]])
     start_list = data_source.node[mode[0]]
-
-    odd = int(walk_length) % 2
-    num_length = int(int(walk_length) / 2)
     with open(outfilename, 'w') as outfile:
-
-        for i in start_list:
-            start_node = i
-            for j in range(0, int(num_walks)):
+        for start_node in sorted(start_list):
+            for _ in range(0, int(num_walks)):
                 outline = mode[0] + start_node
                 current_node = start_node
-                for index in range(0, num_length - 1):
-                    current_node = random.choice(relation1[current_node])  # relation1
-                    outline += " " + mode[1] + current_node
-                    current_node = random.choice(relation2[current_node])  # relation2
-                    outline += " " + mode[2] + current_node
-                if (odd == 0):
-                    current_node = random.choice(relation1[current_node])
-                    outline += " " + mode[1] + current_node
+                l, r = 1, 1
+                while l <= walk_length:
+                    current_node = random.choice(relations[r - 1][current_node])
+                    outline += " " + mode[r] + current_node
+                    r = r + 1 if r + 1 < len(mode) else 1
+                    l += 1
                 outfile.write(outline + "\n")
 
 
-def random_walk_five(num_walks, walk_length, mode, data_source, outfilename):
-    relation1 = data_source.relation_dict[mode[0] + '-' + mode[1]]
-    relation2 = data_source.relation_dict[mode[1] + '-' + mode[2]]
-    relation3 = data_source.relation_dict[mode[2] + '-' + mode[3]]
-    relation4 = data_source.relation_dict[mode[3] + '-' + mode[4]]
-    start_list = data_source.node[mode[0]]
-
-    num_length = int(int(walk_length) / 4)
-    with open(outfilename, 'w') as outfile:
-        for i in start_list:
-            start_node = i
-            for j in range(0, num_walks):
-                outline = mode[0] + start_node
-                current_node = start_node
-                for index in range(0, num_length):
-                    current_node = random.choice(relation1[current_node])  # relation1
-                    outline += " " + mode[1] + current_node
-
-                    current_node = random.choice(relation2[current_node])  # relation2
-                    outline += " " + mode[2] + current_node
-
-                    current_node = random.choice(relation3[current_node])  # relation3
-                    outline += " " + mode[3] + current_node
-
-                    current_node = random.choice(relation4[current_node])  # relation4
-                    outline += " " + mode[4] + current_node
-                outfile.write(outline + "\n")
+# def random_walk_three(num_walks, walk_length, mode, data_source, outfilename):
+#     relation1 = data_source.relation_dict[mode[0] + '-' + mode[1]]
+#     relation2 = data_source.relation_dict[mode[1] + '-' + mode[2]]
+#     start_list = data_source.node[mode[0]]
+#
+#     odd = int(walk_length) % 2
+#     num_length = int(int(walk_length) / 2)
+#     with open(outfilename, 'w') as outfile:
+#
+#         for i in start_list:
+#             start_node = i
+#             for j in range(0, int(num_walks)):
+#                 outline = mode[0] + start_node
+#                 current_node = start_node
+#                 for index in range(0, num_length - 1):
+#                     current_node = random.choice(relation1[current_node])  # relation1
+#                     outline += " " + mode[1] + current_node
+#                     current_node = random.choice(relation2[current_node])  # relation2
+#                     outline += " " + mode[2] + current_node
+#                 if (odd == 0):
+#                     current_node = random.choice(relation1[current_node])
+#                     outline += " " + mode[1] + current_node
+#                 outfile.write(outline + "\n")
+#
+#
+# def random_walk_five(num_walks, walk_length, mode, data_source, outfilename):
+#     relation1 = data_source.relation_dict[mode[0] + '-' + mode[1]]
+#     relation2 = data_source.relation_dict[mode[1] + '-' + mode[2]]
+#     relation3 = data_source.relation_dict[mode[2] + '-' + mode[3]]
+#     relation4 = data_source.relation_dict[mode[3] + '-' + mode[4]]
+#     start_list = data_source.node[mode[0]]
+#
+#     num_length = int(int(walk_length) / 4)
+#     with open(outfilename, 'w') as outfile:
+#         for i in start_list:
+#             start_node = i
+#             for j in range(0, num_walks):
+#                 outline = mode[0] + start_node
+#                 current_node = start_node
+#                 for index in range(0, num_length):
+#                     current_node = random.choice(relation1[current_node])  # relation1
+#                     outline += " " + mode[1] + current_node
+#
+#                     current_node = random.choice(relation2[current_node])  # relation2
+#                     outline += " " + mode[2] + current_node
+#
+#                     current_node = random.choice(relation3[current_node])  # relation3
+#                     outline += " " + mode[3] + current_node
+#
+#                     current_node = random.choice(relation4[current_node])  # relation4
+#                     outline += " " + mode[4] + current_node
+#                 outfile.write(outline + "\n")
 
 
 def hyper_edge_sample(g_hin, output_datafold, scale, tup):

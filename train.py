@@ -38,10 +38,11 @@ def main():
         config.temp_file += args.dataset + '-' + config.metapath + '.txt'
         config.out_emd_file += args.dataset + '-' + config.metapath + '.txt'
         print("Metapath walking!")
-        if len(config.metapath) == 3:
-            data = random_walk_three(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
-        elif len(config.metapath) == 5:
-            data = random_walk_five(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
+        mp_based_random_walk(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
+        # if len(config.metapath) == 3:
+        #     data = random_walk_three(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
+        # elif len(config.metapath) == 5:
+        #     data = random_walk_five(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
         m2v = Metapath2VecTrainer(config)
         print("Training")
         m2v.train()
