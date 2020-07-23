@@ -5,6 +5,9 @@ from src.utils.utils import str_list_to_float
 def inverse_relation(s):
     return s[2] + s[1] + s[0]
 
+def str_int(elem):
+    return int(elem)
+
 
 class HIN(object):
     def __init__(self, inputfold, data_type, relation_list):
@@ -37,8 +40,10 @@ class HIN(object):
                 node[self.data_type[source_id]].add(token[0])
                 node[self.data_type[target_id]].add(token[1])
                 node_num = node_num + 1
+
+        for i in node:
+            node[i] = sorted(list(node[i]), key=str_int)
         idx1 = 0
-        idx2 = 0
         for i in self.data_type:
             idx2 = 0
             for j in node[i]:
@@ -114,15 +119,21 @@ class HIN(object):
 
     def load_label(self):
         label = {}
+        set_label = []
         with open(self.label_file) as file:
             for i in file:
                 line = i.strip().split()
                 label[line[0]] = int(line[1])
-        return label
+                set_label.append(int(line[1]))
+        return label, len(set(set_label))
 
     def load_fea(self):
-        with open(self.fea_file) as infile:
-            for line in infile.readlines()[1:]:
-                emd = line.strip().split()
-                self.feature[emd[0]] = np.array(str_list_to_float(emd[1:]))
+        try:
+            with open(self.fea_file) as infile:
+                for line in infile.readlines()[1:]:
+                    emd = line.strip().split()
+                    self.feature[emd[0]] = np.array(str_list_to_float(emd[1:]))
+        except FileNotFoundError:
+            print("The dataset directory can't find the feature file!")
+            exit(1)
 

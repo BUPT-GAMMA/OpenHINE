@@ -4,6 +4,10 @@ import tensorflow as tf
 import scipy.io as sio
 from src.model.GAT import HeteGAT_multi
 from src.utils.utils import write_emd_file
+import warnings
+warnings.filterwarnings(action='error')
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 # 禁用gpu
 def sample_mask(idx, l):
     """Create mask."""

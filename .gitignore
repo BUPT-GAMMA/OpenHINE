@@ -16,3 +16,4 @@ __pycache__/
 *
 # Except this file
 !.gitignore
+dataset/yelp/edge.txt

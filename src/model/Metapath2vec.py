@@ -6,7 +6,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.nn import init
-
+from sklearn.cluster import KMeans
+from sklearn.metrics import normalized_mutual_info_score, f1_score
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
 
 
 
@@ -186,10 +189,60 @@ class SkipGramModel(nn.Module):
                 e = ' '.join(map(lambda x: str(x), embedding[wid]))
                 f.write('%s %s\n' % (w, e))
 
+    def eva_embedding(self, word2id, label, n_label):
+        embedding = self.u_embeddings.weight.cpu().data.numpy()
+        embedding_dict = {}
+        for node in label:
+            if(word2id.get(node,-1) == -1):
+                print(node)
+            embedding_dict[node] = embedding[word2id[node]].tolist()
+
+        NMI = 0
+        mi_all = 0
+        ma_all = 0
+        n = 1
+        for i in range(n):
+            NMI = NMI + self.evaluate_cluster(embedding_dict, label, n_label)
+            micro_f1, macro_f1 = self.evaluate_clf(embedding_dict, label)
+            mi_all += micro_f1
+            ma_all += macro_f1
+        NMI = NMI / n
+        micro_f1 = mi_all / n
+        macro_f1 = ma_all / n
+        print('NMI = %.4f' % NMI)
+        print('Micro_F1 = %.4f, Macro_F1 = %.4f' % (micro_f1, macro_f1))
+
+    def evaluate_cluster(self, embedding_dict, label, n_label):
+        X = []
+        Y = []
+        for p in label:
+            X.append(embedding_dict[p])
+            Y.append(label[p])
+
+        Y_pred = KMeans(n_label, random_state=0).fit(np.array(X)).predict(X)
+        nmi =  normalized_mutual_info_score(np.array(Y), Y_pred)
+        return nmi
+
+    def evaluate_clf(self, embedding_dict, label):
+        X = []
+        Y = []
+        for p in label:
+            X.append(embedding_dict[p])
+            Y.append(label[p])
+
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+        LR = LogisticRegression()
+        LR.fit(X_train, Y_train)
+        Y_pred = LR.predict(X_test)
+
+        micro_f1 = f1_score(Y_test, Y_pred, average = 'micro')
+        macro_f1 = f1_score(Y_test, Y_pred, average = 'macro')
+        return micro_f1, macro_f1
 
 class Metapath2VecTrainer:
 
-    def __init__(self, args):
+    def __init__(self, args, g_hin):
         self.data = DataReader(args.temp_file, 0, 0)# min_cont & care_type
 
         dataset = Metapath2vecDataset(self.data, args.window_size, args.neg_num)
@@ -200,8 +253,8 @@ class Metapath2VecTrainer:
         self.emb_size = len(self.data.word2id)
         self.emb_dimension = args.dim
         self.batch_size = args.batch_size
-        self.iterations = args.epochs
-
+        self.epochs = args.epochs
+        self.label, self.n_label = g_hin.load_label()
         self.initial_lr = args.alpha
 
         self.skip_gram_model = SkipGramModel(self.emb_size, self.emb_dimension)
@@ -214,9 +267,8 @@ class Metapath2VecTrainer:
             self.skip_gram_model.cuda()
 
     def train(self):
-
-        for iteration in range(self.iterations):
-            # print("\nIteration: " + str(iteration + 1))
+        print("Training")
+        for epoch in range(self.epochs):
             optimizer = optim.SparseAdam(self.skip_gram_model.parameters(), lr=self.initial_lr)
 
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(self.dataloader))
@@ -248,8 +300,8 @@ class Metapath2VecTrainer:
 
                     #     print(" Loss: " + str(running_loss))
                     n = i
-            print("epoch:" + str(iteration) + " Loss: " + str(epoch_loss / n))
-
+            print("epoch:" + str(epoch) + " Loss: " + str(epoch_loss / n))
+            self.skip_gram_model.eva_embedding(self.data.word2id, self.label, self.n_label)
             self.skip_gram_model.save_embedding(self.data.id2word, self.output_file_name)
 
 

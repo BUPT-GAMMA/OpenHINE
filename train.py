@@ -4,6 +4,7 @@ from src.utils.data_process import *
 from src.model.RHINE import *
 from src.model.Metapath2vec import *
 from src.utils.sampler import *
+from src.utils.hete_random_walk import *
 from src.utils.utils import *
 from src.model.DHNE import *
 # from src.model import HHNE
@@ -14,10 +15,11 @@ from src.model.HIN2vec import *
 from src.model.HAN import *
 from src.model.HeGAN import HeGAN
 import warnings
-
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings('ignore')
 
-
+seed = 0
 def main():
     args = init_para()
     config_file = ["./src/config.ini"]
@@ -35,16 +37,19 @@ def main():
         print("Train")
         TrainRHINE(config, g_hin.node2id_dict)
     elif args.model == "Metapath2vec":
-        config.temp_file += args.dataset + '-' + config.metapath + '.txt'
-        config.out_emd_file += args.dataset + '-' + config.metapath + '.txt'
-        print("Metapath walking!")
-        mp_based_random_walk(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
-        # if len(config.metapath) == 3:
-        #     data = random_walk_three(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
-        # elif len(config.metapath) == 5:
-        #     data = random_walk_five(config.num_walks, config.walk_length, config.metapath, g_hin, config.temp_file)
+        config.temp_file += args.dataset + '_' + config.metapath + '.txt'
+        config.out_emd_file += args.dataset + '_' + config.metapath + '.txt'
+
+        random_walk_based_mp(g_hin, config.metapath, config.num_walks, config.walk_length, config.temp_file)
+        m2v = Metapath2VecTrainer(config, g_hin)
+        m2v.train()
+
+    elif args.model == "HeteSpaceyWalk":
+        config.temp_file += args.dataset + '_' + config.metapath + '.txt'
+        config.out_emd_file += args.dataset + '_' + config.metapath + '.txt'
+        random_walk_spacey_mp(g_hin, config.metapath, config.data_type,
+                              config.num_walks, config.walk_length, config.temp_file, config.beta)
         m2v = Metapath2VecTrainer(config)
-        print("Training")
         m2v.train()
     elif args.model == "DHNE":
         hyper_edge_sample(g_hin, output_datafold=config.temp_file, scale=config.scale, tup=config.triple_hyper)
@@ -120,7 +125,7 @@ def main():
     elif args.model == "HIN2vec":
         HIN2vec(g_hin, config.out_emd_file, config)
     elif args.model == "HAN":
-        data_process = HAN_process(g_hin, config.mp_list, args.dataset)
+        data_process = HAN_process(g_hin, config.mp_list, args.dataset, config.featype)
         config.out_emd_file += 'node.txt'
         m = HAN(config, data_process)
         m.train()
@@ -136,7 +141,7 @@ def main():
 def init_para():
     parser = argparse.ArgumentParser(description="OPEN-HINE")
     parser.add_argument('-d', '--dataset', default='acm', type=str, help="Dataset")
-    parser.add_argument('-m', '--model', default='HAN', type=str, help='Train model')
+    parser.add_argument('-m', '--model', default='Metapath2vec', type=str, help='Train model')
     # parser.add_argument('-t', '--task', default='node_classification', type=str, help='Evaluation task')
     # parser.add_argument('-p', '--metapath', default='pap', type=str, help='Metapath sampling')
     # parser.add_argument('-s', '--save', default='1', type=str, help='save temproal')

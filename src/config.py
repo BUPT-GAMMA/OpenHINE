@@ -70,7 +70,20 @@ class Config(object):
         elif args.model == "HERec":
             self.metapath_list = conf.get("HERec", "metapath_list")
         elif args.model == "Metapath2vec":
+            self.num_walks = conf.getint("Metapath2vec", "num_walks")
+            self.walk_length = conf.getint("Metapath2vec", "walk_length")
+            self.window_size = conf.getint("Metapath2vec", "window_size")
+            self.neg_num = conf.getint("Metapath2vec", "neg_num")
+            self.batch_size = conf.getint("Metapath2vec", "batch_size")
+            self.dim = conf.getint("Metapath2vec", "dim")
+            self.num_workers = conf.getint("Metapath2vec", "num_workers")
+            self.alpha = conf.getfloat("Metapath2vec", "alpha")
+            self.epochs = conf.getint("Metapath2vec", "epochs")
             self.metapath = conf.get("Metapath2vec", "metapath")
+
+        elif args.model == "HeteSpaceyWalk":
+            self.metapath = conf.get("HeteSpaceyWalk", "metapath")
+            self.beta = conf.getfloat("HeteSpaceyWalk", "beta")
         elif args.model == "DHNE":
             self.scale = conf.get("DHNE", "scale")
             self.hidden_size = conf.getint("DHNE", "hidden_size")
@@ -90,7 +103,11 @@ class Config(object):
             self.outBinaryFlag = conf.getint("PME", "outBinaryFlag")
             self.M = conf.getint("PME", "M")
         elif args.model == "HAN":
-            self.patience = 100
+            self.dim = conf.getint("HAN", "dim")
+            self.alpha = conf.getfloat("HAN", "alpha")
+            self.epochs = conf.getint("HAN", "epochs")
+            self.lr_decay = conf.getfloat("HAN", "lr_decay")
+            self.patience = conf.getint("HAN", "patience")
             self.mp_list = conf.get("HAN", "metapath_list")
             self.featype = conf.get("HAN", "featype")
         elif args.model == "HeGAN":
