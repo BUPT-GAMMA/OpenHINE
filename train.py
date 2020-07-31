@@ -14,6 +14,7 @@ from src.model.HERec import DW
 from src.model.HIN2vec import *
 from src.model.HAN import *
 from src.model.HeGAN import HeGAN
+from src.model.PTE import *
 import warnings
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -80,7 +81,7 @@ def main():
     #               lr_decay=config.lr_decay, output_embfold=config.out_emd_file)
     elif args.model == "MetaGraph2vec":
         config.temp_file += 'graph_rw.txt'
-        config.out_emd_file += 'node.txt'
+        config.out_emd_file += args.dataset + '_node.txt'
         mgg = MetaGraphGenerator()
         if args.dataset == "acm":
             mgg.generate_random_three(config.temp_file, config.num_walks, config.walk_length, g_hin.node,
@@ -112,8 +113,15 @@ def main():
     #     # pme.load()
     #     pme.train()
     #     pme.out()
-    # elif args.model == "PTE":
-    #     pass
+    elif args.model == "PTE":
+        config.temp_file += args.dataset + '.txt'
+        config.out_emd_file += args.dataset + '_node.txt'
+        print('PTE')
+        data = PTEDataReader(g_hin, config)
+        alias_table = AliasSampling(data)
+        pte = PTETrainer(g_hin, config, data, alias_table)
+        print('Training')
+        pte.train()
     elif args.model == "HERec":
         mp_list = config.metapath_list.split("|")
         for mp in mp_list:
@@ -126,7 +134,7 @@ def main():
         HIN2vec(g_hin, config.out_emd_file, config)
     elif args.model == "HAN":
         data_process = HAN_process(g_hin, config.mp_list, args.dataset, config.featype)
-        config.out_emd_file += 'node.txt'
+        config.out_emd_file += args.dataset + '_node.txt'
         m = HAN(config, data_process)
         m.train()
     elif args.model == "HeGAN":

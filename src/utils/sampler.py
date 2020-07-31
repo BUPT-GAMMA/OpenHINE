@@ -358,3 +358,77 @@ def Hegan_read_graph(g_hin):
     n_node = len(g_hin.node2id_dict)
     # print relations
     return n_node, len(g_hin.relation_dict), graph
+
+
+class AliasSampling:
+    ''' Alias Sampling is a method that can takes only O(1) time
+        to sample from large numbers of samples , where U indicates
+        the proportion of the original while K indicates the index of
+        the added sample.
+    '''
+
+    def __init__(self, data):
+        self.input_file = data.temp_file
+        self.edge2id = {}
+        self.id2edge = {}
+        self.edge_type = data.edge_type
+        self.InitEdgeIndex()
+        self.edge_weight = data.edge_weight
+        self.prob = self.InitProb()
+        self.pos_index = {}
+        self.InitAliasTable()
+
+    def InitEdgeIndex(self):
+        eid = {}
+        for edge in self.edge_type:
+            self.edge2id[edge] = {}
+            self.id2edge[edge] = {}
+            eid[edge] = 0
+        with open(self.input_file, 'r') as f:
+            line = f.readline()
+            prob = {}
+            while line:
+                [src, tar, relation, weight] = line.split()
+                self.edge2id[relation][str(src) + '-' + str(tar)] = eid[relation]
+                self.id2edge[relation][str(eid[relation])] = str(src) + '-' + str(tar)
+                eid[relation] += 1
+                line = f.readline()
+
+    def InitProb(self):
+        prob = {}
+        for relation in self.edge_weight:
+            prob[relation] = np.array(list(self.edge_weight[relation].values()), dtype='int32')
+
+            prob_sum = np.sum(prob[relation])
+            prob[relation] = prob[relation] / prob_sum * len(prob[relation])
+        return prob
+
+    def InitAliasTable(self):
+        for relation in self.edge_type:
+            self.pos_index[relation] = {}
+            overfull, underfull = [], []
+            for i, prob_i in enumerate(self.prob[relation]):
+                if prob_i > 1:
+                    overfull.append(i)
+                elif prob_i < 1:
+                    underfull.append(i)
+            while len(overfull) and len(underfull):
+                i, j = overfull.pop(), underfull.pop()
+                self.pos_index[relation][j] = i
+                self.prob[relation][i] = self.prob[relation][i] - (1 - self.prob[relation][j])
+                if self.prob[relation][i] > 1:
+                    overfull.append(i)
+                elif self.prob[relation][i] < 1:
+                    underfull.append(i)
+
+    def sampling(self, edge_type):
+        length = len(self.prob[edge_type])
+        r1 = random.randint(0, length - 1)
+        if self.prob[edge_type][r1] == 1:
+            return r1
+        r2 = random.random()
+        if self.prob[edge_type][r1] > r2:
+            return r1
+        return self.pos_index[edge_type][r1]
+
+

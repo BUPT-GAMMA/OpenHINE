@@ -126,5 +126,7 @@ class Config(object):
             self.emb_filenames = self.out_emd_file
             self.model_log = self.output_modelfold + 'HeGAN/'
             self.label_smooth = conf.getfloat("HeGAN", "label_smooth")
+        elif args.model == "PTE":
+            self.iteration = conf.getint("PTE", "iteration")
         else:
             pass

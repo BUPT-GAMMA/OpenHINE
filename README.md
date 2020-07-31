@@ -10,7 +10,7 @@ This is an open-source toolkit for Heterogeneous Information Network Embedding(O
 
 #### Contributors：
 
-DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Nian Liu, Jiawei Liu, Guanyi Chu, Jiayue Liu, Jianan Zhao, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
+DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Nian Liu, Jiawei Liu, Hongrui Liu, Guanyi Chu, Jiayue Liu, Jianan Zhao, Xiao Wang, Cheng Yang, Chuan Shi.
 
 ## Get started
 
@@ -153,6 +153,12 @@ a0 ... ...
 
 ​		src code:https://github.com/daokunzhang/MetaGraph2Vec
 
+##### [PTE KDD 2015]
+
+​		PTE: Predictive Text Embedding through Large-scale Heterogeneous Text Networks
+
+​		src code:https://github.com/mnqu/PTE
+
 ##### 	[RHINE AAAI 2019]
 
 ​		Relation Structure-Aware Heterogeneous Information Network Embedding 
@@ -204,6 +210,7 @@ a0 ... ...
 | HIN2vec           | 0.8458   | 0.8449   | 0.4148 |
 | Metapath2vec(PAP) | 0.7823   | 0.7725   | 0.2828 |
 | MetaGraph2vec     | 0.8085   | 0.8019   | 0.5095 |
+| PTE               | 0.7624   | 0.7543   | 0.3781 |
 | RHINE             | 0.7699   | 0.7571   | 0.3970 |
 
 | DBLP dataset        | Micro-F1 | Macro-F1 | NMI    |
@@ -215,6 +222,7 @@ a0 ... ...
 | HIN2vec             | 0.9495   | 0.9460   | 0.3924 |
 | Metapath2vec(APCPA) | 0.9483   | 0.9448   | 0.7786 |
 | MetaGraph2vec       | 0.9138   | 0.9093   | 0.6136 |
+| PTE                 | 0.9335   | 0.9301   | 0.3280 |
 | RHINE               | 0.9360   | 0.9316   | 0.7356 |
 
 HAN uses the dataset without features.

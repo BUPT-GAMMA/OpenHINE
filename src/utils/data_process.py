@@ -20,10 +20,12 @@ class HIN(object):
         self.node2id_dict = {}
         self.matrix2id_dict = {}
         self.find_dict = {}
+        self.edge_weight = {}
         self.node = self.load_node()
         self.adj_matrix = {}
         self.relation_dict = self.load_relation()
         self.feature = {}
+
 
     def load_node(self):
         node = {}
@@ -74,6 +76,10 @@ class HIN(object):
                 # if tar not in relation_dict[inv_relation]:
                 #     relation_dict[inv_relation][tar] = []
                 # relation_dict[inv_relation][tar].append(src)
+                if relation not in self.edge_weight:
+                    self.edge_weight[relation] = {}
+                self.edge_weight[relation][str(src)+'-'+str(tar)] = token[3]
+
         for i, r in enumerate(self.relation_list):
             self.relation2id_dict[r] = i
         return relation_dict
