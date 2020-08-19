@@ -55,6 +55,8 @@ The model parameter could be modified in the file ( ./src/config.ini ).
 
 ​	--epoch: the number of iterations	
 
+​	--num_workers:number of workers for dataset loading (It should be set to 0, if you are in trouble with Windows OS.)
+
 ​	etc...
 
 - ###### 	specific parameter
@@ -231,4 +233,4 @@ HAN uses the dataset without features.
 
 Note that OpenHINE is just version 0.1 and **still actively under development**, so feedback and contributions are welcome. Feel free to submit your questions as a issue.
 
-In the future, we will contain more models and tasks. We use the assorted deep learning framework, so we want to unify the model with PyTorch. If you have a demo of the above model with PyTorch or want your method added into our toolkit, contract us please.
+In the future, we will contain more models and tasks. We use the assorted deep learning framework, so we want to unify the model with PyTorch. If you have a demo of the above model with PyTorch or want your method added into our toolkit, contract us please. Submit a issue or email to tyzhao@bupt.edu.cn.
