@@ -89,7 +89,7 @@ def main():
         elif args.dataset == "dblp":
             mgg.generate_random_four(config.temp_file, config.num_walks, config.walk_length, g_hin.node,
                                      g_hin.relation_dict)
-        model = Metapath2VecTrainer(config)
+        model = Metapath2VecTrainer(config,g_hin)
         print("Training")
         model.train()
     # elif args.model == "PME":
@@ -149,7 +149,7 @@ def main():
 def init_para():
     parser = argparse.ArgumentParser(description="OPEN-HINE")
     parser.add_argument('-d', '--dataset', default='acm', type=str, help="Dataset")
-    parser.add_argument('-m', '--model', default='Metapath2vec', type=str, help='Train model')
+    parser.add_argument('-m', '--model', default='MetaGraph2vec', type=str, help='Train model')
     # parser.add_argument('-t', '--task', default='node_classification', type=str, help='Evaluation task')
     # parser.add_argument('-p', '--metapath', default='pap', type=str, help='Metapath sampling')
     # parser.add_argument('-s', '--save', default='1', type=str, help='save temproal')
