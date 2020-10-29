@@ -4,6 +4,10 @@ import tensorflow as tf
 import scipy.io as sio
 from src.model.GAT import HeteGAT_multi
 from src.utils.utils import write_emd_file
+import warnings
+warnings.filterwarnings(action='error')
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 # 禁用gpu
 def sample_mask(idx, l):
     """Create mask."""
@@ -59,7 +63,7 @@ class HAN():
         self.config = tf.ConfigProto()
         self.config.gpu_options.allow_growth = True
         self.checkpt_file = './output/temp/model.ckpt'
-        self.featype = 'adj'
+        self.featype = config.featype
         self.data_process =data_process
         self.out_emd_file = config.out_emd_file
 

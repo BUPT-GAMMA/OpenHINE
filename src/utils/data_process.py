@@ -1,24 +1,31 @@
 import numpy as np
 from scipy.sparse import csr_matrix
-
+from src.utils.utils import str_list_to_float
 
 def inverse_relation(s):
     return s[2] + s[1] + s[0]
 
+def str_int(elem):
+    return int(elem)
+
 
 class HIN(object):
-    def __init__(self, edgefile, data_type, relation_list):
-        self.input_edge = './dataset/' + edgefile + '/edge.txt'
-        self.label_file = './dataset/' + edgefile + '/label.txt'
+    def __init__(self, inputfold, data_type, relation_list):
+        self.input_edge = inputfold + 'edge.txt'
+        self.label_file = inputfold + 'label.txt'
+        self.fea_file = inputfold + 'feature.txt'
         self.data_type = data_type
         self.relation_list = relation_list.split('+')
         self.relation2id_dict = {}
         self.node2id_dict = {}
         self.matrix2id_dict = {}
         self.find_dict = {}
+        self.edge_weight = {}
         self.node = self.load_node()
         self.adj_matrix = {}
         self.relation_dict = self.load_relation()
+        self.feature = {}
+
 
     def load_node(self):
         node = {}
@@ -35,8 +42,10 @@ class HIN(object):
                 node[self.data_type[source_id]].add(token[0])
                 node[self.data_type[target_id]].add(token[1])
                 node_num = node_num + 1
+
+        for i in node:
+            node[i] = sorted(list(node[i]), key=str_int)
         idx1 = 0
-        idx2 = 0
         for i in self.data_type:
             idx2 = 0
             for j in node[i]:
@@ -67,6 +76,10 @@ class HIN(object):
                 # if tar not in relation_dict[inv_relation]:
                 #     relation_dict[inv_relation][tar] = []
                 # relation_dict[inv_relation][tar].append(src)
+                if relation not in self.edge_weight:
+                    self.edge_weight[relation] = {}
+                self.edge_weight[relation][str(src)+'-'+str(tar)] = token[3]
+
         for i, r in enumerate(self.relation_list):
             self.relation2id_dict[r] = i
         return relation_dict
@@ -112,9 +125,21 @@ class HIN(object):
 
     def load_label(self):
         label = {}
+        set_label = []
         with open(self.label_file) as file:
             for i in file:
                 line = i.strip().split()
                 label[line[0]] = int(line[1])
-        return label
+                set_label.append(int(line[1]))
+        return label, len(set(set_label))
+
+    def load_fea(self):
+        try:
+            with open(self.fea_file) as infile:
+                for line in infile.readlines()[1:]:
+                    emd = line.strip().split()
+                    self.feature[emd[0]] = np.array(str_list_to_float(emd[1:]))
+        except FileNotFoundError:
+            print("The dataset directory can't find the feature file!")
+            exit(1)
 

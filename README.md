@@ -10,7 +10,7 @@ This is an open-source toolkit for Heterogeneous Information Network Embedding(O
 
 #### Contributors：
 
-DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Jiawei Liu, Nian Liu, Guanyi Chu, Jiayue Liu, Xiao Wang, Cheng Yang, Linmei Hu, Chuan Shi.
+DMGroup from BUPT: Tianyu Zhao, Meiqi Zhu, Nian Liu, Jiawei Liu, Hongrui Liu, Guanyi Chu, Jiayue Liu, Jianan Zhao, Xiao Wang, Cheng Yang, Chuan Shi.
 
 ## Get started
 
@@ -55,6 +55,8 @@ The model parameter could be modified in the file ( ./src/config.ini ).
 
 ​	--epoch: the number of iterations	
 
+​	--num_workers:number of workers for dataset loading (It should be set to 0, if you are in trouble with Windows OS.)
+
 ​	etc...
 
 - ###### 	specific parameter
@@ -83,39 +85,49 @@ If you want to train your own dataset, create the file (./dataset/your_dataset_n
 
 PS：The input graph is directed and the undirected needs to be transformed into directed graph.
 
+###### Input:	feature	
+
+​		number_of_nodes embedding_dim
+
+​		node_name dim1 dim2 
+
+e.g.
+
+```
+11246	2
+a1814 0.06386946886777878 -0.04781734198331833
+a0 ... ...
+```
+
+
+
 ## Model
 
 #### Available
 
-##### 	DHNE
+##### 	[DHNE AAAI 2018]
 
 ​		Structural Deep Embedding for Hyper-Networks 
 
-​		[DHNE AAAI 2018]
-
 ​		src code:https://github.com/tadpole/DHNE
 
-##### 	HAN
+##### 	[HAN WWW 2019]
 
 ​		Heterogeneous Graph Attention Network
 
-​		 [HAN WWW 2019]
+​		Add feature.txt into the input folder or set the parameter "featype": "adj", which means that you will use adjacency matrix as your feature.
 
 ​		src code:https://github.com/Jhy1993/HAN
 
-##### HeGAN
+##### [HeGAN KDD 2019]
 
 ​		Adversarial Learning on Heterogeneous Information Network 
 
-​		[HeGAN KDD 2019]
-
 ​		src code:https://github.com/librahu/HeGAN
 
-##### 	HERec
+##### 	[HERec TKDE 2018]
 
 ​		Heterogeneous Information Network Embedding for Recommendation 
-
-​		[HERec TKDE 2018]
 
 ​		src code:https://github.com/librahu/HERec
 
@@ -123,37 +135,35 @@ PS：The input graph is directed and the undirected needs to be transformed into
 
 ​			metapath_list: pap|psp	(split by "|")
 
-##### 	HIN2vec
+##### 	[HIN2Vec CIKM 2017]
 
 ​		HIN2Vec: Explore Meta-paths in Heterogeneous Information Networks for Representation Learning 
 
-​		[HIN2Vec CIKM 2017]
-
 ​		src code:https://github.com/csiesheep/hin2vec
 
-##### 	Metapath2vec	
+##### 	[metapath2vec KDD 2017]
 
 ​		metapath2vec: Scalable Representation Learning for Heterogeneous Networks 
-
-​		[metapath2vec KDD 2017]
 
 ​		src code:https://ericdongyx.github.io/metapath2vec/m2v.html
 
 ​		the python version implemented by DGL:https://github.com/dmlc/dgl/tree/master/examples/pytorch/metapath2vec 
 
-##### 	MetaGrapth2vec
+##### 	[MetaGraph2Vec PAKDD 2018]
 
 ​		MetaGraph2Vec: Complex Semantic Path Augmented Heterogeneous Network Embedding
 
-​		[MetaGraph2Vec PAKDD 2018]
-
 ​		src code:https://github.com/daokunzhang/MetaGraph2Vec
 
-##### 	RHINE
+##### [PTE KDD 2015]
+
+​		PTE: Predictive Text Embedding through Large-scale Heterogeneous Text Networks
+
+​		src code:https://github.com/mnqu/PTE
+
+##### 	[RHINE AAAI 2019]
 
 ​		Relation Structure-Aware Heterogeneous Information Network Embedding 
-
-​		[RHINE AAAI 2019]
 
 ​		only supported in the Linux
 
@@ -175,6 +185,22 @@ e.g.
 python test.py -d dblp -m HAN -n node.txt
 ```
 
+###### output:	embedding	
+
+​		number_of_nodes embedding_dim
+
+​		node_name dim1 dim2 
+
+e.g.
+
+```
+11246	2
+a1814 0.06386946886777878 -0.04781734198331833
+a0 ... ...
+```
+
+
+
 ## Evaluation/Task
 
 | ACM dataset       | Micro-F1 | Macro-F1 | NMI    |
@@ -186,6 +212,7 @@ python test.py -d dblp -m HAN -n node.txt
 | HIN2vec           | 0.8458   | 0.8449   | 0.4148 |
 | Metapath2vec(PAP) | 0.7823   | 0.7725   | 0.2828 |
 | MetaGraph2vec     | 0.8085   | 0.8019   | 0.5095 |
+| PTE               | 0.7624   | 0.7543   | 0.3781 |
 | RHINE             | 0.7699   | 0.7571   | 0.3970 |
 
 | DBLP dataset        | Micro-F1 | Macro-F1 | NMI    |
@@ -197,10 +224,13 @@ python test.py -d dblp -m HAN -n node.txt
 | HIN2vec             | 0.9495   | 0.9460   | 0.3924 |
 | Metapath2vec(APCPA) | 0.9483   | 0.9448   | 0.7786 |
 | MetaGraph2vec       | 0.9138   | 0.9093   | 0.6136 |
+| PTE                 | 0.9335   | 0.9301   | 0.3280 |
 | RHINE               | 0.9360   | 0.9316   | 0.7356 |
+
+HAN uses the dataset without features.
 
 ## Future work
 
 Note that OpenHINE is just version 0.1 and **still actively under development**, so feedback and contributions are welcome. Feel free to submit your questions as a issue.
 
-In the future, we will contain more models and tasks. We use the assorted deep learning framework, so we want to unify the model with PyTorch. If you have a demo of the above model with PyTorch or want your method added into our toolkit, contract us please.
+In the future, we will contain more models and tasks. We use the assorted deep learning framework, so we want to unify the model with PyTorch. If you have a demo of the above model with PyTorch or want your method added into our toolkit, contract us please. Submit a issue or email to tyzhao@bupt.edu.cn.

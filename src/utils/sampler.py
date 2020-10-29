@@ -73,57 +73,47 @@ def write2file(mtx, file):
     print(str(total))
 
 
-def random_walk_three(num_walks, walk_length, mode, data_source, outfilename):
-    relation1 = data_source.relation_dict[mode[0] + '-' + mode[1]]
-    relation2 = data_source.relation_dict[mode[1] + '-' + mode[2]]
+
+def mp_based_random_walk(num_walks, walk_length, mode, data_source, outfilename):
+    # random.seed(2019)
+    assert mode[0]==mode[-1] # MP based RW is only applicable for metapaths with same source and target nodes.
+
+    relations = []
+    for i in range(len(mode) - 1):
+        relations.append(data_source.relation_dict[mode[i] + '-' + mode[i + 1]])
     start_list = data_source.node[mode[0]]
-
-    odd = int(walk_length) % 2
-    num_length = int(int(walk_length) / 2)
     with open(outfilename, 'w') as outfile:
-
-        for i in start_list:
-            start_node = i
-            for j in range(0, int(num_walks)):
+        for start_node in sorted(start_list):
+            for _ in range(0, int(num_walks)):
                 outline = mode[0] + start_node
                 current_node = start_node
-                for index in range(0, num_length - 1):
-                    current_node = random.choice(relation1[current_node])  # relation1
-                    outline += " " + mode[1] + current_node
-                    current_node = random.choice(relation2[current_node])  # relation2
-                    outline += " " + mode[2] + current_node
-                if (odd == 0):
-                    current_node = random.choice(relation1[current_node])
-                    outline += " " + mode[1] + current_node
+                l, r = 1, 1
+                while l <= walk_length:
+                    current_node = random.choice(relations[r - 1][current_node])
+                    outline += " " + mode[r] + current_node
+                    r = r + 1 if r + 1 < len(mode) else 1
+                    l += 1
                 outfile.write(outline + "\n")
 
+def random_walk_based_str(num_walks, mode, data_source, outflilename):
+    assert mode[0] == mode[-1]
 
-def random_walk_five(num_walks, walk_length, mode, data_source, outfilename):
-    relation1 = data_source.relation_dict[mode[0] + '-' + mode[1]]
-    relation2 = data_source.relation_dict[mode[1] + '-' + mode[2]]
-    relation3 = data_source.relation_dict[mode[2] + '-' + mode[3]]
-    relation4 = data_source.relation_dict[mode[3] + '-' + mode[4]]
     start_list = data_source.node[mode[0]]
-
-    num_length = int(int(walk_length) / 4)
-    with open(outfilename, 'w') as outfile:
-        for i in start_list:
-            start_node = i
-            for j in range(0, num_walks):
+    with open(outflilename, 'w') as outfile:
+        for start_node in sorted(start_list):
+            for _ in range(0, num_walks):
                 outline = mode[0] + start_node
                 current_node = start_node
-                for index in range(0, num_length):
-                    current_node = random.choice(relation1[current_node])  # relation1
-                    outline += " " + mode[1] + current_node
-
-                    current_node = random.choice(relation2[current_node])  # relation2
-                    outline += " " + mode[2] + current_node
-
-                    current_node = random.choice(relation3[current_node])  # relation3
-                    outline += " " + mode[3] + current_node
-
-                    current_node = random.choice(relation4[current_node])  # relation4
-                    outline += " " + mode[4] + current_node
+                r = 1
+                while r < len(mode):
+                    try:
+                        name = mode[r-1] + '-' + mode[r]
+                        data_source.relation_dict.has_key(name)
+                    except:
+                        print("metapath is unavailable")
+                    current_node = random.choice(data_source.relation_dict[name][current_node])
+                    outline += " " + mode[r] + current_node
+                    r += 1
                 outfile.write(outline + "\n")
 
 
@@ -241,103 +231,34 @@ class RHINEDataProcess(object):
             merged_data.writelines(str(line_num) + '\n' + content)
 
 
-class MetaGraphGenerator:
-    def __init__(self):
-        pass
-
-    # walk length=80  walks per node=40
-    def generate_random_four(self, outfilename, numwalks, walklength,
-                             nodelist, relation_dict):
-        mg_type = "apct"
-        start_list = nodelist[mg_type[0]]
-        relation1 = relation_dict["a-p"]
-        relation2 = relation_dict["p-a"]
-        relation3 = relation_dict["p-c"]
-        relation4 = relation_dict["c-p"]
-
-        relation5 = relation_dict["p-t"]
-        relation6 = relation_dict["t-p"]
-
-        with open(outfilename, 'w') as outfile:
-            for i in start_list:
-                for j in range(0, numwalks):
-                    k = 0
-                    current_node = mg_type[0] + i
-                    outline = current_node
-                    while k < walklength:
-                        if (current_node[0] == mg_type[0]):
-                            current_node = mg_type[1] + random.choice(relation1[current_node[1:]])
-                            outline += " " + current_node
-                        elif current_node[0] == mg_type[1]:
-                            l1 = len(relation2[current_node[1:]])
-                            l2 = len(relation3[current_node[1:]])
-                            l3 = len(relation5[current_node[1:]])
-                            random_int = random.randint(1, l1 + l2 + l3)
-                            if random_int <= l1:
-                                current_node = mg_type[0] + random.choice(relation2[current_node[1:]])
-                            elif random_int <= l1 + l2:
-                                current_node = mg_type[2] + random.choice(relation3[current_node[1:]])
-                            else:
-                                current_node = mg_type[3] + random.choice(relation5[current_node[1:]])
-                            outline += " " + current_node
-                        elif current_node[0] == mg_type[2]:
-                            current_node = mg_type[1] + random.choice(relation4[current_node[1:]])
-                            outline += " " + current_node
-                        elif current_node[0] == mg_type[3]:
-                            current_node = mg_type[1] + random.choice(relation6[current_node[1:]])
-                            outline += " " + current_node
-                        else:
-                            print("error!")
-                        k += 1
-                    outfile.write(outline + "\n")
-
-    def generate_random_three(self, outfilename, numwalks, walklength,
-                              nodelist, relation_dict):
-        mg_type = "aps"
-        start_list = nodelist[mg_type[0]]
-        relation1 = relation_dict["a-p"]
-        relation2 = relation_dict["p-a"]
-        relation3 = relation_dict["p-s"]
-        relation4 = relation_dict["s-p"]
-
-        with open(outfilename, 'w') as outfile:
-            for i in start_list:
-                for j in range(0, numwalks):
-                    k = 0
-                    current_node = mg_type[0] + i
-                    outline = current_node
-                    while k < walklength:
-                        if (current_node[0] == mg_type[0]):
-                            current_node = mg_type[1] + random.choice(relation1[current_node[1:]])
-                            outline += " " + current_node
-                        elif current_node[0] == mg_type[1]:
-                            l1 = len(relation2[current_node[1:]])
-                            l2 = len(relation3[current_node[1:]])
-                            random_int = random.randint(1, l1 + l2)
-                            if random_int <= l1:
-                                current_node = mg_type[0] + random.choice(relation2[current_node[1:]])
-                            else:
-                                current_node = mg_type[2] + random.choice(relation3[current_node[1:]])
-                            outline += " " + current_node
-                        elif current_node[0] == mg_type[2]:
-                            current_node = mg_type[1] + random.choice(relation4[current_node[1:]])
-                            outline += " " + current_node
-                        else:
-                            print("error!")
-                        k += 1
-                    outfile.write(outline + "\n")
 
 
 class HAN_process():
-    def __init__(self, g_hin, mp_list, dataset):
+    def __init__(self, g_hin, mp_list, dataset, featype):
         self.s = mp_list[0][0]
         g_hin.load_matrix()
         self.adj_matrix = g_hin.adj_matrix
-        self.label = g_hin.load_label()
+        self.label, self.n_label = g_hin.load_label()
         self.matrix2id_dict = g_hin.matrix2id_dict
         self.find_dict = g_hin.find_dict
         self.mp_list = mp_list.split("|")
         self.dataset = dataset
+        self.n_nodes = len(g_hin.node[self.s])
+        if featype == 'fea':
+            g_hin.load_fea()
+        self.featype = featype
+        self.feature = g_hin.feature
+
+
+    def fea_process(self):
+        dim = len(self.feature[self.s + "0"])
+        fea_array = np.zeros((self.n_nodes, dim), float)
+        for i in range(self.n_nodes):
+            f = self.feature[self.s + str(i)]
+            id = self.matrix2id_dict[self.s + str(i)]
+            fea_array[id][:] = f
+        return fea_array
+
 
     def data_process(self):
         rownetworks = []
@@ -399,8 +320,12 @@ class HAN_process():
                                                                                               train_idx.shape,
                                                                                               val_idx.shape,
                                                                                               test_idx.shape))
-        truefeatures = 0
-        truefeatures_list = [truefeatures, truefeatures, truefeatures]
+        if self.featype == 'fea':
+            truefeatures = self.fea_process()
+            truefeatures_list = [truefeatures, truefeatures, truefeatures]
+        else:
+            truefeatures_list = rownetworks
+
         return rownetworks, truefeatures_list, y_train, y_val, y_test, train_mask, val_mask, test_mask
 
     def sample_mask(self, idx, l):
@@ -433,3 +358,77 @@ def Hegan_read_graph(g_hin):
     n_node = len(g_hin.node2id_dict)
     # print relations
     return n_node, len(g_hin.relation_dict), graph
+
+
+class AliasSampling:
+    ''' Alias Sampling is a method that can takes only O(1) time
+        to sample from large numbers of samples , where U indicates
+        the proportion of the original while K indicates the index of
+        the added sample.
+    '''
+
+    def __init__(self, data):
+        self.input_file = data.temp_file
+        self.edge2id = {}
+        self.id2edge = {}
+        self.edge_type = data.edge_type
+        self.InitEdgeIndex()
+        self.edge_weight = data.edge_weight
+        self.prob = self.InitProb()
+        self.pos_index = {}
+        self.InitAliasTable()
+
+    def InitEdgeIndex(self):
+        eid = {}
+        for edge in self.edge_type:
+            self.edge2id[edge] = {}
+            self.id2edge[edge] = {}
+            eid[edge] = 0
+        with open(self.input_file, 'r') as f:
+            line = f.readline()
+            prob = {}
+            while line:
+                [src, tar, relation, weight] = line.split()
+                self.edge2id[relation][str(src) + '-' + str(tar)] = eid[relation]
+                self.id2edge[relation][str(eid[relation])] = str(src) + '-' + str(tar)
+                eid[relation] += 1
+                line = f.readline()
+
+    def InitProb(self):
+        prob = {}
+        for relation in self.edge_weight:
+            prob[relation] = np.array(list(self.edge_weight[relation].values()), dtype='int32')
+
+            prob_sum = np.sum(prob[relation])
+            prob[relation] = prob[relation] / prob_sum * len(prob[relation])
+        return prob
+
+    def InitAliasTable(self):
+        for relation in self.edge_type:
+            self.pos_index[relation] = {}
+            overfull, underfull = [], []
+            for i, prob_i in enumerate(self.prob[relation]):
+                if prob_i > 1:
+                    overfull.append(i)
+                elif prob_i < 1:
+                    underfull.append(i)
+            while len(overfull) and len(underfull):
+                i, j = overfull.pop(), underfull.pop()
+                self.pos_index[relation][j] = i
+                self.prob[relation][i] = self.prob[relation][i] - (1 - self.prob[relation][j])
+                if self.prob[relation][i] > 1:
+                    overfull.append(i)
+                elif self.prob[relation][i] < 1:
+                    underfull.append(i)
+
+    def sampling(self, edge_type):
+        length = len(self.prob[edge_type])
+        r1 = random.randint(0, length - 1)
+        if self.prob[edge_type][r1] == 1:
+            return r1
+        r2 = random.random()
+        if self.prob[edge_type][r1] > r2:
+            return r1
+        return self.pos_index[edge_type][r1]
+
+

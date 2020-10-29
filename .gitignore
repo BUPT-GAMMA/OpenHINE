@@ -11,3 +11,9 @@ __pycache__/
 
 # Environments
 .env
+.DS_Store
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+dataset/yelp/edge.txt

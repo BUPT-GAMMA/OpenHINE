@@ -18,8 +18,7 @@ class Config(object):
         self.batch_size = conf.getint("common_para", "batch_size")
         self.dim = conf.getint("common_para", "dim")
         self.num_workers = conf.getint("common_para", "num_workers")
-        self.out_emd_file = conf.get("common_para", "out_emd_file") + args.model + "/"
-        self.temp_file = conf.get("common_para", "temp_file") + args.model + "/"
+
         self.alpha = conf.getfloat("common_para", "alpha")
         self.epochs = conf.getint("common_para", "epochs")
         self.seed = conf.getint("common_para", "seed")
@@ -35,24 +34,11 @@ class Config(object):
 
 
         # training dataset path
-        self.input_edge = conf.get("Data_In", "input_edge")
         self.output_modelfold = conf.get("Data_Out", "output_modelfold")
+        self.input_fold = conf.get("Data_In", "input_fold") + args.dataset  + '/'
+        self.out_emd_file = conf.get("Data_Out", "out_emd_file") + args.model + "/"
+        self.temp_file = conf.get("Data_Out", "temp_file") + args.model + "/"
 
-        if conf.has_option("Data_In", "input_id"):
-            self.input_id = data_path + conf.get("Data_In", "input_id")
-        else:
-            self.input_id = False
-
-        if conf.has_option("Data_In", "input_fold"):
-            self.input_fold = data_path + conf.get("Data_In", "input_fold")
-        else:
-            self.input_fold = False
-
-
-        if conf.has_option("Data_Out", "output_datafold"):
-            self.output_datafold = data_path + conf.get("Data_Out", "output_datafold")
-        else:
-            self.output_datafold = False
 
         if args.model == "RHINE":
             self.relation_category = conf.get("RHINE", "relation_category")
@@ -84,7 +70,20 @@ class Config(object):
         elif args.model == "HERec":
             self.metapath_list = conf.get("HERec", "metapath_list")
         elif args.model == "Metapath2vec":
+            self.num_walks = conf.getint("Metapath2vec", "num_walks")
+            self.walk_length = conf.getint("Metapath2vec", "walk_length")
+            self.window_size = conf.getint("Metapath2vec", "window_size")
+            self.neg_num = conf.getint("Metapath2vec", "neg_num")
+            self.batch_size = conf.getint("Metapath2vec", "batch_size")
+            self.dim = conf.getint("Metapath2vec", "dim")
+            self.num_workers = conf.getint("Metapath2vec", "num_workers")
+            self.alpha = conf.getfloat("Metapath2vec", "alpha")
+            self.epochs = conf.getint("Metapath2vec", "epochs")
             self.metapath = conf.get("Metapath2vec", "metapath")
+
+        elif args.model == "HeteSpaceyWalk":
+            self.metapath = conf.get("HeteSpaceyWalk", "metapath")
+            self.beta = conf.getfloat("HeteSpaceyWalk", "beta")
         elif args.model == "DHNE":
             self.scale = conf.get("DHNE", "scale")
             self.hidden_size = conf.getint("DHNE", "hidden_size")
@@ -104,8 +103,13 @@ class Config(object):
             self.outBinaryFlag = conf.getint("PME", "outBinaryFlag")
             self.M = conf.getint("PME", "M")
         elif args.model == "HAN":
-            self.patience = 100
+            self.dim = conf.getint("HAN", "dim")
+            self.alpha = conf.getfloat("HAN", "alpha")
+            self.epochs = conf.getint("HAN", "epochs")
+            self.lr_decay = conf.getfloat("HAN", "lr_decay")
+            self.patience = conf.getint("HAN", "patience")
             self.mp_list = conf.get("HAN", "metapath_list")
+            self.featype = conf.get("HAN", "featype")
         elif args.model == "HeGAN":
             self.lambda_gen = conf.getfloat("HeGAN", "lambda_gen")
             self.lambda_dis = conf.getfloat("HeGAN", "lambda_dis")
@@ -122,5 +126,7 @@ class Config(object):
             self.emb_filenames = self.out_emd_file
             self.model_log = self.output_modelfold + 'HeGAN/'
             self.label_smooth = conf.getfloat("HeGAN", "label_smooth")
+        elif args.model == "PTE":
+            self.iteration = conf.getint("PTE", "iteration")
         else:
             pass
