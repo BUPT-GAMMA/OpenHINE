@@ -230,7 +230,4 @@ a0 ... ...
 HAN uses the dataset without features.
 
 ## Future work
-
-Note that OpenHINE is just version 0.1 and **still actively under development**, so feedback and contributions are welcome. Feel free to submit your questions as a issue.
-
-In the future, we will contain more models and tasks. We use the assorted deep learning framework, so we want to unify the model with PyTorch. If you have a demo of the above model with PyTorch or want your method added into our toolkit, contract us please. Submit a issue or email to tyzhao@bupt.edu.cn.
+We will use the [dgl](https://github.com/dmlc/dgl) as our backend. And the OpenHINE will not be updated. We will be dedicated in building the new toolkit OpenHGNN, which is a high-level package built on top of DGL. It will have Better Extensibility, Better Encapsulation and More Effiencient.
