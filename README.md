@@ -2,6 +2,8 @@
 
 This is an open-source toolkit for Heterogeneous Information Network Embedding(OpenHINE) with version 0.1. We can train and test the model more easily. It provides implementations of many popular models, including: DHNE, HAN, HeGAN, HERec, HIN2vec, Metapath2vec, MetaGraph2vec, RHINE. More materials can be found in [www.shichuan.org](http://www.shichuan.org).
 
+We build a new toolkit [OpenHGNN](https://github.com/BUPT-GAMMA/OpenHGNN), which is a high-level package built on top of DGL. It will have Better Extensibility, Better Encapsulation and More Effiencient. And it includes two embedding models, Metapath2vec and HeRec.
+
 **convenience provided:**
 
 - ​	easy to train and evaluate
