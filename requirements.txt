@@ -1,5 +1,5 @@
 numpy==1.18.1
 scikit_learn==0.21.2
-tensorflow==2.5.3
+tensorflow==2.6.4
 pytorch==1.4.0
 keras==2.3.1
